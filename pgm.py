@@ -5,8 +5,6 @@ from Stokes import return_sparse_matrix_Stokes
 from interpolate import interpolate, interpolate2m
 import subprocess
 
-from test_mmodel import load_model_simple
-
 def load_step(filename, Step):
 	data = np.load("%s/%s.npz")
 	mxx = data['mxx']

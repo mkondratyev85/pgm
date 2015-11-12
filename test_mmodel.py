@@ -2,8 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def load_model(i_res, j_res, marker_density):
-	image = plt.imread("test3.npy").astype(int)
+	image = plt.imread("test3.png")
+	image = image[:,:,0]+image[:,:,1] + image[:,:,2]
 	image_i, image_j = image.shape
+	uniqe, vals = np.unique(image,return_inverse=True)
+	image = vals.reshape((image_i, image_j))
 
 	# markers
 	mxx = []
