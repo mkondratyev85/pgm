@@ -6,27 +6,28 @@ from interpolate import interpolate, interpolate2m
 import subprocess
 
 def load_step(filename, Step):
-	data = np.load("%s/%s.npz")
-	mxx = data['mxx']
-	myy = data['myy']
-	m_cat = data['m_cat']
-	m_eta = data['m_eta']
-	m_rho = data['m_rho']
+	data = np.load("%s/%s.npz" % (filename, Step))
+	mxx = data['arr_0']
+	myy = data['arr_1']
+	m_cat = data['arr_2']
+	m_eta = data['arr_3']
+	m_rho = data['arr_4']
 
-	width, height, j_res, i_res, gx_0, gy_0 = np.loadtxt("%s/params.txt", unpack=True)
+	width, height, j_res, i_res, gx_0, gy_0 = np.loadtxt("%s/params.txt" % filename, unpack=True)
 
 	return width, height, j_res, i_res, gx_0, gy_0, mxx, myy, m_cat, m_rho, m_eta
 
 class PGM:
-	def __init__(self, width, height, j_res, i_res, gx_0, gy_0, mxx, myy, m_cat, m_rho, m_eta):
-		self.height, self.width  = width, height
-		self.j_res, self.i_res = j_res, i_res
-		self.dx = width / (j_res-1)
-		self.dy = height/ (i_res-1)
+	def __init__(self, width, height, j_res, i_res, gx_0, gy_0, mxx, myy, m_cat, m_rho, m_eta, T = None, Step = None):
+		self.height, self.width  = int(width), int(height)
+		self.j_res, self.i_res = int(j_res), int(i_res)
+		self.dx = self.width / (self.j_res-1)
+		self.dy = self.height /( self.i_res-1)
 		self.dx2, self.dy2 = self.dx**2, self.dy**2
 
 		self.gx_0, self.gy_0 = gx_0, gy_0
-		self.p0cell  =  0 # Pressure condition in one cell (i==2 && j==3)
+		self.p0cell  =  0 # Pressure condition in one cell (i==1 && j==2)
+		
 
 		# define grid for messing with indexes
 		self.j      = np.linspace(0,j_res-1,j_res).astype('int')
@@ -38,6 +39,9 @@ class PGM:
 		self.m_cat = m_cat
 		self.m_rho = m_rho
 		self.m_eta = m_eta
+
+		self.T = T
+		self.Step = T
 
 		self.kbond   = 4*self.m_eta.min()/((self.dx+self.dy)**2)
 		self.kcont   = 2*self.m_eta.min()/(self.dx+self.dy)
@@ -58,8 +62,11 @@ class PGM:
 
 		self.figname = filename
 
-		T = 0
-		Step = -1
+		T = self.T
+		Step =  self.Step
+
+		if not T : T = 0
+		if not Step: Step = -1
 
 		np.savetxt("%s/params.txt" % self.figname, np.vstack((self.width, self.height, j_res, i_res, gx_0, gy_0)).T)
 
@@ -162,5 +169,4 @@ class PGM:
 	
 	def save(self, Step, mxx, myy, m_cat, m_eta, m_rho):
 		Myr = lambda t: t/(365.25*24*3600*10**6) # Convert seconds to millions of year
-		array = np.vstack((mxx,myy,m_cat, m_eta,m_rho)).T
 		np.savez("%s/%s.npz" % (self.figname, Step), mxx, myy, m_cat, m_eta, m_rho)
