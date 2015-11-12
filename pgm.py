@@ -28,7 +28,6 @@ class PGM:
 		self.gx_0, self.gy_0 = gx_0, gy_0
 		self.p0cell  =  0 # Pressure condition in one cell (i==1 && j==2)
 		
-
 		# define grid for messing with indexes
 		self.j      = np.linspace(0,j_res-1,j_res).astype('int')
 		self.i      = np.linspace(0,i_res-1,i_res).astype('int')
