@@ -18,7 +18,7 @@ def load_step(filename, Step):
 	return width, height, j_res, i_res, gx_0, gy_0, mxx, myy, m_cat, m_rho, m_eta
 
 class PGM:
-	def __init__(self, width, height, j_res, i_res, gx_0, gy_0, mxx, myy, m_cat, m_rho, m_eta, T = None, Step = None):
+	def __init__(self, width, height, j_res, i_res, gx_0, gy_0, mxx, myy, m_cat, m_rho, m_eta, T = None, Step = None, p0cell=0):
 		self.height, self.width  = int(width), int(height)
 		self.j_res, self.i_res = int(j_res), int(i_res)
 		self.dx = self.width / (self.j_res-1)
@@ -26,7 +26,7 @@ class PGM:
 		self.dx2, self.dy2 = self.dx**2, self.dy**2
 
 		self.gx_0, self.gy_0 = gx_0, gy_0
-		self.p0cell  =  0 # Pressure condition in one cell (i==1 && j==2)
+		self.p0cell  =  p0cell # Pressure condition in one cell (i==1 && j==2)
 		
 		# define grid for messing with indexes
 		self.j      = np.linspace(0,j_res-1,j_res).astype('int')
