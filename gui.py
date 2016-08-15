@@ -108,7 +108,7 @@ image = vals.reshape((image_i, image_j))
 
 my_cmap = matplotlib.cm.get_cmap('copper')
 my_cmap.set_under('r')
-fig = plt.figure(figsize=(5,4))
+fig = plt.figure()
 im = plt.imshow(image,cmap=my_cmap)
 ax = plt.gca()
 canvas = FigureCanvasTkAgg(fig, master=root)
