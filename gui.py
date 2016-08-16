@@ -45,15 +45,17 @@ class observable(object):
 	def bind(self, callback):
 		self._observers.append(callback)
 
-materials = {"default":{"mu":1,"rho":2,"eta":3, "C":10, "sinphi":11},
-		"sticky air": {"mu":4,"rho":5,"eta":6,"C":40,"sinphi":41}}
+materials = {"default":{"mu":1,"rho":1,"eta":1, "C":1, "sinphi":1},
+		"magma" :{"mu":8*10**10,"rho":2800,"eta":10**16, "C":10**7,"sinphi":45},
+		"sand" :{"mu":10**6,"rho":1560,"eta":10**9, "C":10,"sinphi":np.sin(np.radians(36))},
+		"sticky air": {"mu":10**6,"rho":1,"eta":10**2,"C":10,"sinphi":0}}
 
 selected_category = 0
 
 def material_changed(*args, **kwargs):
 	global listbox, model_materials
 	listbox.delete(0, Tk.END)
-	for (i,item) in enumerate(model_materials.get()):
+	for (i,item) in enumerate([i["name"] for i in model_materials.get()]):
 		listbox.insert(Tk.END, "%s : %s" % (i+1, item))
 	if selected_category: listbox.activate(selected_category)
 
@@ -61,12 +63,17 @@ def material_selected(*args):
 	global muvar, etavar, rhovar, model_materials
 	if not selected_category: return False
 	selectedmaterial = materialvar.get()
-	muvar.set("mu = %s" % materials[selectedmaterial]["mu"])
-	rhovar.set("rho = %s" % materials[selectedmaterial]["rho"])
-	etavar.set("eta = %s" % materials[selectedmaterial]["eta"])
-	Cvar.set("C = %s" % materials[selectedmaterial]["C"])
-	sinphivar.set("sinphi = %s" % materials[selectedmaterial]["sinphi"])
-	model_materials[selected_category] = selectedmaterial
+	model_materials[selected_category] = { "name":selectedmaterial,
+		                                   "rho":materials[selectedmaterial]["rho"],
+		                                   "eta":materials[selectedmaterial]["eta"],
+		                                   "mu":materials[selectedmaterial]["mu"],
+		                                   "C":materials[selectedmaterial]["C"],
+		                                   "sinphi":materials[selectedmaterial]["sinphi"], }
+	muvar.set("mu = %s" % model_materials.get()[selected_category]["mu"])
+	rhovar.set("rho = %s" % model_materials.get()[selected_category]["rho"])
+	etavar.set("eta = %s" % model_materials.get()[selected_category]["eta"])
+	Cvar.set("C = %s" % model_materials.get()[selected_category]["C"])
+	sinphivar.set("sinphi = %s" % model_materials.get()[selected_category]["sinphi"])
 
 def listbox_get(event):
 	l = event.widget
@@ -76,7 +83,8 @@ def listbox_get(event):
 	redraw_canvas(image_to_show)
 	global selected_category
 	selected_category = sel
-	materialvar.set(model_materials[selected_category])
+	selectedmaterial = model_materials.get()[selected_category]["name"]
+	materialvar.set(selectedmaterial)
 
 def redraw_canvas(im_to_show):
 	im.set_data(im_to_show)
@@ -94,13 +102,18 @@ image_i, image_j = image.shape
 uniqe, vals = np.unique(image,return_inverse=True)
 image = vals.reshape((image_i, image_j))
 
-
 model_materials = observable([])
 model_materials.bind(material_changed)
 mm = []
 for (i,item) in enumerate(uniqe):
 	image[image==item] = i
-	mm.append("default")
+	#mm.append("default")
+	mm.append({"name":"default",
+		       "rho":materials["default"]["rho"],
+		       "eta":materials["default"]["eta"],
+		       "mu":materials["default"]["mu"],
+		       "C":materials["default"]["C"],
+		       "sinphi":materials["default"]["sinphi"], })
 uniqe, vals = np.unique(image,return_inverse=True)
 image = vals.reshape((image_i, image_j))
 

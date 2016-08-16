@@ -7,7 +7,9 @@ def add_to_sparse(x,y,value,row,col,data):
 		col.append(y)
 		data.append(value)
 
-def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gy_0, kbond, kcont, p0cell):
+def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gy_0, kbond, kcont, p0cell,
+		                        lower_boundary="slip", upper_boundary="slip",
+								left_boundary="slip", right_boundary="slip"):
 	# Constructing sparse matrix for solving: x-Stokes, y-Stokes and continuity equations
 	# x-Stokes: ETA(d2vx/dx2+d2vx/dy2)-dP/dx=0
 	# y-Stokes: ETA(d2vy/dx2+d2vy/dy2)-dP/dy=gy*RHO
@@ -76,23 +78,27 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gy_0, k
 			# Upper boundary, iner points (i=0, 0<j<j_res)
 			elif i==0 and 0<j<j_res-1:
 				# Free slip dVx/dy=0: Vx(i,j)-Vx(i+1,j)=0
-				add_to_sparse(Vx(k[i][j]),Vx(k[i][j]) ,   kbond    ,row,col,data) # Coefficient for Vx(i,j)
-				add_to_sparse(Vx(k[i][j]),Vx(k[i+1][j]) ,-kbond    ,row,col,data) # Coefficient for Vx(i+1,j)
-				vector[Vx(k[i][j])] = 0                                           # Right-hand-side part
+				if upper_boundary=="sleep":
+					add_to_sparse(Vx(k[i][j]),Vx(k[i][j]) ,   kbond    ,row,col,data) # Coefficient for Vx(i,j)
+					add_to_sparse(Vx(k[i][j]),Vx(k[i+1][j]) ,-kbond    ,row,col,data) # Coefficient for Vx(i+1,j)
+					vector[Vx(k[i][j])] = 0                                           # Right-hand-side part
 				## No slip vx=0: vx(i,j)-1/3*vx(i+1,j)=0
-				#add_to_sparse(Vx(k[i][j]),Vx(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vx(i,j)
-				#add_to_sparse(Vx(k[i][j]),Vx(k[i+1][j]) ,-(1.0/3)*kbond  ,row,col,data) # Coefficient for Vx(i+1,j)
-				#vector[Vx(k[i][j])] = 0                                                 # Right-hand-side part
+				else:
+					add_to_sparse(Vx(k[i][j]),Vx(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vx(i,j)
+					add_to_sparse(Vx(k[i][j]),Vx(k[i+1][j]) ,-(1.0/3)*kbond  ,row,col,data) #Coefficient for Vx(i+1,j)
+					vector[Vx(k[i][j])] = 0                                                 # Right-hand-side part
 			# Lower boundary, iner points (i=i_res-1, 0<j<j_res)
 			elif i==i_res-2 and 0<j<j_res-1:
 				# Free slip dvx/dy=0: vx(i,j)-vx(i-1,j)=0
-				add_to_sparse(Vx(k[i][j]),Vx(k[i][j]) ,   kbond    ,row,col,data) # Coefficient for Vx(i,j)
-				add_to_sparse(Vx(k[i][j]),Vx(k[i-1][j]) ,-kbond    ,row,col,data) # Coefficient for Vx(i-1,j)
-				vector[Vx(k[i][j])] = 0                                           # Right-hand-side part
+				if lower_boundary=="sleep":
+					add_to_sparse(Vx(k[i][j]),Vx(k[i][j]) ,   kbond    ,row,col,data) # Coefficient for Vx(i,j)
+					add_to_sparse(Vx(k[i][j]),Vx(k[i-1][j]) ,-kbond    ,row,col,data) # Coefficient for Vx(i-1,j)
+					vector[Vx(k[i][j])] = 0                                           # Right-hand-side part
 				## No slip vx=0: vx(i,j)-1/3*vx(i-1,j)=0
-				#add_to_sparse(Vx(k[i][j]),Vx(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vx(i,j)
-				#add_to_sparse(Vx(k[i][j]),Vx(k[i-1][j]) ,-(1.0/3)*kbond  ,row,col,data) # Coefficient for Vx(i-1,j)
-				#vector[Vx(k[i][j])] = 0                                                 # Right-hand-side part
+				else:
+					add_to_sparse(Vx(k[i][j]),Vx(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vx(i,j)
+					add_to_sparse(Vx(k[i][j]),Vx(k[i-1][j]) ,-(1.0/3)*kbond  ,row,col,data) #Coefficient for Vx(i-1,j)
+					vector[Vx(k[i][j])] = 0                                                 # Right-hand-side part
 			else:
 				# Internal nodes: dSxx/dx+dSxy/dy-dP/dx=0    
 				# dSxx/dx=2*etan(i+1,j+1)*(vx(i,j+1)-vx(i,j))/dx^2-2*etan(i+1,j)*(vx(i,j)-vx(i,j-1))/dx^2
@@ -129,23 +135,27 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gy_0, k
 			# Left boundary, iner points (j=0, 0<i<i_res)
 			elif j==0 and 0 < i < i_res-1:
 				# Free slip dvy/dx=0: vy(i,j)-vy(i,j+1)=0
-				add_to_sparse(Vy(k[i][j]),Vy(k[i][j]) ,   kbond    ,row,col,data) # Coefficient for Vy(i,j)
-				add_to_sparse(Vy(k[i][j]),Vy(k[i][j+1]) ,-kbond    ,row,col,data) # Coefficient for Vy(i,j+1)
-				vector[Vy(k[i][j])] = 0                                           # Right-hand-side part
+				if left_boundary == "sleep":
+					add_to_sparse(Vy(k[i][j]),Vy(k[i][j]) ,   kbond    ,row,col,data) # Coefficient for Vy(i,j)
+					add_to_sparse(Vy(k[i][j]),Vy(k[i][j+1]) ,-kbond    ,row,col,data) # Coefficient for Vy(i,j+1)
+					vector[Vy(k[i][j])] = 0                                           # Right-hand-side part
 				## No slip vy=0: vy(i,j)-1/3*vy(i,j+1)=0
-				#add_to_sparse(Vy(k[i][j]),Vy(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vy(i,j)
-				#add_to_sparse(Vy(k[i][j]),Vy(k[i][j+1]) ,-(1.0/3)*kbond  ,row,col,data) # Coefficient for Vy(i,j+1)
-				#vector[Vy(k[i][j])] = 0                                                 # Right-hand-side part
+				else:
+					add_to_sparse(Vy(k[i][j]),Vy(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vy(i,j)
+					add_to_sparse(Vy(k[i][j]),Vy(k[i][j+1]) ,-(1.0/3)*kbond  ,row,col,data) # Coefficient for Vy(i,j+1)
+					vector[Vy(k[i][j])] = 0                                                 # Right-hand-side part
 			# Right boundary, iner points (j=j_res-1, 0<i<i_res)
 			elif j==j_res-2 and 0 < i <i_res-1:
 				# Free slip dvy/dx=0: vy(i,j)-vy(i,j-1)=0
-				add_to_sparse(Vy(k[i][j]),Vy(k[i][j]) ,   kbond    ,row,col,data) # Coefficient for Vy(i,j)
-				add_to_sparse(Vy(k[i][j]),Vy(k[i][j-1]) ,-kbond    ,row,col,data) # Coefficient for Vy(i,j-1)
-				vector[Vy(k[i][j])] = 0                                           # Right-hand-side part
+				if right_boundary=="sleep":
+					add_to_sparse(Vy(k[i][j]),Vy(k[i][j]) ,   kbond    ,row,col,data) # Coefficient for Vy(i,j)
+					add_to_sparse(Vy(k[i][j]),Vy(k[i][j-1]) ,-kbond    ,row,col,data) # Coefficient for Vy(i,j-1)
+					vector[Vy(k[i][j])] = 0                                           # Right-hand-side part
 				## No slip vy=0: vy(i,j)-1/3*vy(i,j-1)=0
-				#add_to_sparse(Vy(k[i][j]),Vy(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vy(i,j)
-				#add_to_sparse(Vy(k[i][j]),Vy(k[i][j-1]) ,-(1.0/3)*kbond  ,row,col,data) # Coefficient for Vy(i,j-1)
-				#vector[Vy(k[i][j])] = 0                                                 # Right-hand-side part
+				else:
+					add_to_sparse(Vy(k[i][j]),Vy(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vy(i,j)
+					add_to_sparse(Vy(k[i][j]),Vy(k[i][j-1]) ,-(1.0/3)*kbond  ,row,col,data) # Coefficient for Vy(i,j-1)
+					vector[Vy(k[i][j])] = 0                                                 # Right-hand-side part
 			else:
 				# Internal nodes: dSyy/dy+dSxy/dx-dP/dy=-gy*RHO
 				#dSyy/dy=2*etan(i+1,j+1)*(vy(i+1,j)-vy(i,j))/dy^2-2*etan(i,j+1)*(vy(i,j)-vy(i-1,j))/dy^2
