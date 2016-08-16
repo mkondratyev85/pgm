@@ -47,10 +47,12 @@ class observable(object):
 
 materials = {"default":{"mu":1,"rho":1,"eta":1, "C":1, "sinphi":1},
 		"magma" :{"mu":8*10**10,"rho":2800,"eta":10**16, "C":10**7,"sinphi":45},
+		"light magma" :{"mu":8*10**10,"rho":2600,"eta":10**13, "C":10**7,"sinphi":45},
+		"heavy magma" :{"mu":8*10**10,"rho":3200,"eta":10**16, "C":10**7,"sinphi":45},
 		"sand" :{"mu":10**6,"rho":1560,"eta":10**9, "C":10,"sinphi":np.sin(np.radians(36))},
 		"sticky air": {"mu":10**6,"rho":1,"eta":10**2,"C":10,"sinphi":0}}
 
-selected_category = 0
+selected_category = None
 
 def material_changed(*args, **kwargs):
 	global listbox, model_materials
@@ -61,7 +63,7 @@ def material_changed(*args, **kwargs):
 
 def material_selected(*args):
 	global muvar, etavar, rhovar, model_materials
-	if not selected_category: return False
+	if selected_category == None: return False
 	selectedmaterial = materialvar.get()
 	model_materials[selected_category] = { "name":selectedmaterial,
 		                                   "rho":materials[selectedmaterial]["rho"],
@@ -83,7 +85,7 @@ def listbox_get(event):
 	redraw_canvas(image_to_show)
 	global selected_category
 	selected_category = sel
-	selectedmaterial = model_materials.get()[selected_category]["name"]
+	selectedmaterial = model_materials[selected_category]["name"]
 	materialvar.set(selectedmaterial)
 
 def redraw_canvas(im_to_show):
@@ -163,12 +165,30 @@ rholabel = Tk.Label(propgroup,textvariable=rhovar).pack()
 Clabel = Tk.Label(propgroup,textvariable=Cvar).pack()
 sinphilabel = Tk.Label(propgroup,textvariable=sinphivar).pack()
 
-boundgroup = Tk.LabelFrame(group, text="Boundaries condition:")
+boundgroup = Tk.LabelFrame(group, text="Boundary conditions:")
 boundgroup.pack(fill=Tk.X)
 
-leftboundlabel = Tk.Label(boundgroup,text="Left boundary")
-leftboundlabel.pack()
+leftvar = Tk.StringVar()
+rightvar = Tk.StringVar()
+topvar = Tk.StringVar()
+bottomvar = Tk.StringVar()
 
+Tk.Radiobutton(boundgroup,text="Free slip", variable=topvar, value="sleep").pack(anchor=Tk.N)
+Tk.Radiobutton(boundgroup,text="No free slip", variable=topvar, value="nosleep").pack(anchor=Tk.N)
+
+Tk.Radiobutton(boundgroup,text="Free slip", variable=leftvar, value="sleep").pack(anchor=Tk.W)
+Tk.Radiobutton(boundgroup,text="No free slip", variable=leftvar, value="nosleep").pack(anchor=Tk.W)
+
+Tk.Radiobutton(boundgroup,text="Free slip", variable=rightvar, value="sleep").pack(anchor=Tk.E)
+Tk.Radiobutton(boundgroup,text="No free slip", variable=rightvar, value="nosleep").pack(anchor=Tk.E)
+
+Tk.Radiobutton(boundgroup,text="Free slip", variable=bottomvar, value="sleep").pack(anchor=Tk.S)
+Tk.Radiobutton(boundgroup,text="No free slip", variable=bottomvar, value="nosleep").pack(anchor=Tk.S)
+
+leftvar.set("sleep")
+rightvar.set("sleep")
+topvar.set("sleep")
+bottomvar.set("sleep")
 
 def quit(*args):
 	print ('quit button press...')
@@ -182,7 +202,7 @@ def save(*args):
 import matplotlib.pyplot as plt
 
 def load_model(i_res, j_res, marker_density):
-	image = np.load("{fname:s}.npz")
+	image = np.load("{fname:s}.npy")
 	image_i, image_j = image.shape
 
 	# markers
@@ -218,20 +238,36 @@ def load_model(i_res, j_res, marker_density):
 	m_mu = mu_key[values]
 	m_C = C_key[values]
 	m_sinphi = sinphi_key[values]
+
+	top_bound = "{top:s}"
+	bottom_bound = "{bottom:s}"
+	left_bound = "{left:s}"
+	right_bound = "{right:s}"
+
+	model_prop = {p:s} "mxx":mxx, "myy":myy, "m_cat": m_cat, "m_rho":m_rho, "m_eta":m_eta, "m_mu":m_mu, 
+	"m_C":m_C, "m_sinphi":m_sinphi, "top_bound":top_bound, "bottom_bound":bottom_bound, 
+	"left_bound":left_bound, "right_bound":right_bound {p2:s}
+
+	return model_prop"""
 	
-	return mxx, myy, m_cat, m_rho, m_eta, m_mu, m_C, m_sinphi """ 
+#	return mxx, myy, m_cat, m_rho, m_eta, m_mu, m_C, m_sinphi, top_bound, bottom_bound, left_bound, right_bound """ 
 	context={
 			"fname":"%s" % fname,
-			"rho_list":'%s' % [materials[i]['rho'] for i in model_materials],
-			"eta_list":'%s' % [materials[i]['eta'] for i in model_materials],
-			"mu_list":'%s' % [materials[i]['mu'] for i in model_materials],
-			"C_list":'%s' % [materials[i]['C'] for i in model_materials],
-			"sinphi_list":'%s' % [materials[i]['sinphi'] for i in model_materials],
+			"rho_list":'%s' % [model_materials[i]['rho'] for i in range(len( model_materials.get()))],
+			"eta_list":'%s' % [model_materials[i]['eta'] for i in  range(len(model_materials.get()))],
+			"mu_list":'%s' % [model_materials[i]['mu'] for i in  range(len(model_materials.get()))],
+			"C_list":'%s' % [model_materials[i]['C'] for i in  range(len(model_materials.get()))],
+			"sinphi_list":'%s' % [model_materials[i]['sinphi'] for i in  range(len(model_materials.get()))],
+			"top":topvar.get(),
+			"bottom":bottomvar.get(),
+			"left":leftvar.get(),
+			"right":rightvar.get(),
+			"p":"{",
+			"p2":"}"
 			}
-	print("Saving")
-	print("%s"%[materials[i]["mu"] for i in model_materials])
 	with  open('%s.py' % fname ,'w') as myfile:
 		  myfile.write(template.format(**context))
+	np.save("%s" % (fname), image)
 
 button_save = Tk.Button(group, text = 'Save...', command = save).pack()
 

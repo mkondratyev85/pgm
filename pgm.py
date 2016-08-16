@@ -18,7 +18,8 @@ def load_step(filename, Step):
 	return width, height, j_res, i_res, gx_0, gy_0, mxx, myy, m_cat, m_rho, m_eta
 
 class PGM:
-	def __init__(self, width, height, j_res, i_res, gx_0, gy_0, mxx, myy, m_cat, m_rho, m_eta, T = None, Step = None, p0cell=0):
+	#def __init__(self, width, height, j_res, i_res, gx_0, gy_0, mxx, myy, m_cat, m_rho, m_eta, T = None, Step = None, p0cell=0):
+	def __init__(self, width, height, j_res, i_res, gx_0, gy_0, model_prop, T = None, Step = None, p0cell=0):
 		self.height, self.width  = int(width), int(height)
 		self.j_res, self.i_res = int(j_res), int(i_res)
 		self.dx = self.width / (self.j_res-1)
@@ -33,11 +34,17 @@ class PGM:
 		self.i      = np.linspace(0,i_res-1,i_res).astype('int')
 		self.jj,self.ii  = np.meshgrid(self.j,self.i)
 		
-		self.mxx = mxx
-		self.myy = myy
-		self.m_cat = m_cat
-		self.m_rho = m_rho
-		self.m_eta = m_eta
+		self.mxx = model_prop["mxx"]
+		self.myy = model_prop["myy"]
+		self.m_cat = model_prop["m_cat"]
+		self.m_rho = model_prop["m_rho"]
+		self.m_eta = model_prop["m_eta"]
+		self.m_C = model_prop["m_C"]
+		self.m_sinphi = model_prop["m_sinphi"]
+		self.right_bound = model_prop["right_bound"]
+		self.left_bound = model_prop["left_bound"]
+		self.top_bound = model_prop["top_bound"]
+		self.bottom_bound = model_prop["bottom_bound"]
 
 		self.T = T
 		self.Step = T
@@ -73,7 +80,7 @@ class PGM:
 			# we should interpolate eta_n separately but actually eta_n and eta_s are equal
 			eta_s, eta_n, rho = interpolate(mxx,myy,i_res,j_res,(m_eta, m_eta, m_rho))
 
-			Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gy_0, kbond, kcont, p0cell)
+			Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gy_0, kbond, kcont, p0cell, lower_boundary=self.bottom_bound, upper_boundary=self.top_bound,right_boundary=self.right_bound, left_boundary=self.left_bound)
 
 			Stokes_solve = sparse.linalg.spsolve(Stokes_sparse, vector)
 			P  = Stokes_solve[::3].reshape((i_res),(j_res))
@@ -162,7 +169,7 @@ class PGM:
 		plt.ylim([self.i_res-2,0])
 		plt.xlim([0,self.j_res-2])
 
-		plt.savefig('%s/%08.4f.png' % (self.figname, Myr(T)))
+		plt.savefig('%s/%12.8f.png' % (self.figname, Myr(T)))
 		plt.close(fig)
 
 	
