@@ -7,7 +7,7 @@ def add_to_sparse(x,y,value,row,col,data):
 		col.append(y)
 		data.append(value)
 
-def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, gy_0, kbond, kcont, p0cell,
+def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, gy_0, sxx, sxy, kbond, kcont, p0cell, Vbound={},
 		                        lower_boundary="slip", upper_boundary="slip",
 								left_boundary="slip", right_boundary="slip"):
 	# Constructing sparse matrix for solving: x-Stokes, y-Stokes and continuity equations
@@ -99,6 +99,9 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 					add_to_sparse(Vx(k[i][j]),Vx(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vx(i,j)
 					add_to_sparse(Vx(k[i][j]),Vx(k[i-1][j]) ,-(1.0/3)*kbond  ,row,col,data) #Coefficient for Vx(i-1,j)
 					vector[Vx(k[i][j])] = 0                                                 # Right-hand-side part
+			elif (i,j) in Vbound:
+				add_to_sparse(Vx(k[i][j]), Vx(k[i][j]), kbond ,row,col,data)
+				vector[Vx(k[i][j])] = Vbound[(i,j)][0]*kcont
 			else:
 				# Internal nodes: dSxx/dx+dSxy/dy-dP/dx=0    
 				# dSxx/dx=2*etan(i+1,j+1)*(vx(i,j+1)-vx(i,j))/dx^2-2*etan(i+1,j)*(vx(i,j)-vx(i,j-1))/dx^2
@@ -119,7 +122,7 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 				add_to_sparse(Vx(k[i][j]),P(k[i+1][j]),   kcont/dx           ,row,col,data) # Coefficient for P(i+1,j)
 				add_to_sparse(Vx(k[i][j]),P(k[i+1][j+1]),-kcont/dx           ,row,col,data) # Coefficient for P(i+1,j+1)
 				# Right-hand-side part:0
-				vector[Vx(k[i][j])] = 0                                           # Right-hand-side part
+				vector[Vx(k[i][j])] = -gx_0 * (rho[i,j] + rho[i+1,j])/2.0 - (sxx[i+1,j+1] - sxx[i+1,j])/dx - (sxy[i+1,j] - sxy[i,j])/dy        # Right-hand-side part
 
 			# y-Stokes equation
 			# Ghost vy unknowns (j=j_res) and boundary nodes (i=0, i=i_res-1, j=0, j=j_res-1)
@@ -156,6 +159,9 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 					add_to_sparse(Vy(k[i][j]),Vy(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vy(i,j)
 					add_to_sparse(Vy(k[i][j]),Vy(k[i][j-1]) ,-(1.0/3)*kbond  ,row,col,data) # Coefficient for Vy(i,j-1)
 					vector[Vy(k[i][j])] = 0                                                 # Right-hand-side part
+			elif (i,j) in Vbound:
+				add_to_sparse(Vy(k[i][j]), Vy(k[i][j]), kbond ,row,col,data)
+				vector[Vy(k[i][j])] = Vbound[(i,j)][1]
 			else:
 				# Internal nodes: dSyy/dy+dSxy/dx-dP/dy=-gy*RHO
 				#dSyy/dy=2*etan(i+1,j+1)*(vy(i+1,j)-vy(i,j))/dy^2-2*etan(i,j+1)*(vy(i,j)-vy(i-1,j))/dy^2
@@ -175,7 +181,7 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 				add_to_sparse(Vy(k[i][j]),P(k[i][j+1]),   kcont/dy           ,row,col,data) # Coefficient for P(i,j+1)
 				add_to_sparse(Vy(k[i][j]),P(k[i+1][j+1]),-kcont/dy           ,row,col,data) # Coefficient for P(i+1,j+1)
 				# Right part: -RHO*gy
-				vector[Vy(k[i][j])] = -gy_0 * (rho[i,j] + rho[i,j+1])/2.0                   # Right-hand-side part
+				vector[Vy(k[i][j])] = -gy_0 * (rho[i,j] + rho[i,j+1])/2.0 + (sxx[i+1,j+1] - sxx[i,j+1])/dy - (sxy[i,j+1] - sxy[i,j])/dx        # Right-hand-side part
 
 
 	mtx = sparse.coo_matrix((data, (row, col)), shape=(3*j_res*i_res, 3*j_res*i_res))
