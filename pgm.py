@@ -3,10 +3,15 @@ import matplotlib.pylab as plt
 from scipy import sparse
 #from Stokes import return_sparse_matrix_Stokes
 from Stokeselvis_new import return_sparse_matrix_Stokes
-from interpolate import interpolate, interpolate2m
+from interpolate import interpolate, interpolate2m, interpolate_harmonic
 import subprocess
 
 average = lambda x: (x[:-1,:-1] + x[1:,:-1] +x[1:,1:] +x[:-1,1:])/4.0
+
+def fill_nans(m):
+	print("Nan detected! Filling it using interpolation")
+	mask = np.isnan(m)
+	m[mask] = np.interp(np.flatnonzero(mask),np.flatnonzero(~mask),m[~mask])
 
 def load_step(filename, Step):
 	data = np.load("%s/%s.npz" % (filename, Step))
@@ -45,7 +50,6 @@ def load_step(filename, Step):
 	return width, height, j_res, i_res, gx_0, gy_0, right_bound, left_bound, top_bound, bottom_bound, prop
 
 class PGM:
-	#def __init__(self, width, height, j_res, i_res, gx_0, gy_0, mxx, myy, m_cat, m_rho, m_eta, T = None, Step = None, p0cell=0):
 	def __init__(self, width, height, j_res, i_res, gx_0, gy_0, model_prop, T = None, Step = None, p0cell=0):
 		self.height, self.width  = int(width), int(height)
 		self.j_res, self.i_res = int(j_res), int(i_res)
@@ -67,6 +71,7 @@ class PGM:
 		self.m_rho = model_prop["m_rho"]
 		self.m_eta = model_prop["m_eta"]
 		self.m_C = model_prop["m_C"]
+		self.m_mu = model_prop["m_mu"]
 		self.m_sinphi = model_prop["m_sinphi"]
 		self.right_bound = model_prop["right_bound"]
 		self.left_bound = model_prop["left_bound"]
@@ -80,24 +85,24 @@ class PGM:
 		self.kcont   = 2*self.m_eta.min()/(self.dx+self.dy)
 		self.label = subprocess.check_output(["git", "describe", "--always"])[:-1].decode('utf-8')
 
-	def run(self, maxT, step, filename):
+	def run(self, maxT, step, filename, dt_min=1e+10):
+		self.figname = filename
 		mxx = self.mxx 
 		myy = self.myy 
 		m_cat = self.m_cat
 		m_rho = self.m_rho
 		m_eta = self.m_eta
+		m_mu = self.m_mu
 		m_C = self.m_C
 		m_sinphi = self.m_sinphi
-		m_sxx = np.zeros(np.shape(mxx))
-		m_sxy = np.zeros(np.shape(mxx))
+		m_s_xx = np.zeros(np.shape(mxx))
+		m_s_xy = np.zeros(np.shape(mxx))
 		
 		i_res, j_res = self.i_res, self.j_res
 		dx, dy = self.dx, self.dy
 		gx_0, gy_0 = self.gx_0, self.gy_0
 		kbond, kcont = self.kbond, self.kcont
 		p0cell = self.p0cell
-
-		self.figname = filename
 
 		T = self.T
 		Step =  self.Step
@@ -127,21 +132,41 @@ class PGM:
 				        np.vstack((self.width, self.height, j_res, i_res, gx_0, gy_0,
 				        right_bound, left_bound, top_bound,bottom_bound)).T)
 
+		dt = 0
 		while T < maxT:
+			print(dt)
+			dt = max(dt, dt_min)
+
 			# we should interpolate eta_n separately but actually eta_n and eta_s are equal
-			eta_s, eta_n, rho, sxx_old, sxy_old = interpolate(mxx,myy,i_res,j_res,(m_eta, m_eta, m_rho, 
-				                                              m_sxx, m_sxy))
+			eta, rho, sxx_0, sxy_0 = interpolate(mxx,myy,i_res,j_res, (m_eta, m_rho, m_s_xx, m_s_xy))
+			mu = interpolate_harmonic(mxx,myy,i_res,j_res, m_mu )
 
+			#Check if we have nans
+			if np.isnan(eta).any(): fill_nans(eta)
+			if np.isnan(rho).any(): fill_nans(rho)
+			if np.isnan(mu).any(): fill_nans(mu)
+			if np.isnan(sxx_0).any(): fill_nans(sxx_0)
+			if np.isnan(sxy_0).any(): fill_nans(sxy_0)
 
-			Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, gy_0, sxx_old, sxy_old, kbond, kcont, p0cell, lower_boundary=self.bottom_bound, upper_boundary=self.top_bound,right_boundary=self.right_bound, left_boundary=self.left_bound)
-			#Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, gy_0, kbond, kcont, p0cell, lower_boundary=self.bottom_bound, upper_boundary=self.top_bound,right_boundary=self.right_bound, left_boundary=self.left_bound)
+			Z = dt*mu/(dt*mu + eta)
+			eta = eta * Z
+			sxx_0 = sxx_0 * (1 - Z)
+			sxy_0 = sxy_0 * (1 - Z)
+
+			Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy, 
+					eta, eta, rho, gx_0, gy_0, sxx_0, sxy_0, kbond, kcont, p0cell, 
+					lower_boundary=self.bottom_bound, upper_boundary=self.top_bound,
+					right_boundary=self.right_bound, left_boundary=self.left_bound)
 
 			Stokes_solve = sparse.linalg.spsolve(Stokes_sparse, vector)
 			P  = Stokes_solve[::3].reshape((i_res),(j_res))
 			Vx = Stokes_solve[1::3].reshape((i_res),(j_res))
 			Vy = Stokes_solve[2::3].reshape((i_res),(j_res))
 
-			P = P*kcont
+			P *= kcont
+			Vx *= kcont
+			Vy *= kcont
+
 
 			Vx_max = np.abs(Vx).max()
 			Vy_max = np.abs(Vy).max()
@@ -153,14 +178,6 @@ class PGM:
 			m_Vy = interpolate2m(mxx-.5, myy   , Vy[:,:-1])
 			m_P  = interpolate2m(mxx-.5, myy-.5, P[1:,1:]) # tecnichaly, there must be +.5,+.5 but since we slice P, indexing goes one item lower
 
-			eta, rho = interpolate(mxx,myy,i_res,j_res,(m_eta, m_rho)) # we should interpolate eta_n separately but actually eta_n and eta_s are equal
-
-			#Check if we have nans
-			if np.isnan(rho).any(): 
-				print("Nan detected! Filling it using interpolation")
-				mask = np.isnan(rho)
-				rho[mask] = np.interp(np.flatnonzero(mask),np.flatnonzero(~mask),rho[~mask])
-				eta[mask] = np.interp(np.flatnonzero(mask),np.flatnonzero(~mask),eta[~mask])
 
 			#dVx, dVy   = Vx[1:,  :-1] - Vx[:-1, :-1], Vy[ :-1, 1:] - Vy[:-1, :-1]
 			#dVx_, dVy_ = Vx[ :, 1:-1] - Vx[:,   :-2], Vy[1:-1,  :] - Vy[:-2, :]
@@ -195,21 +212,9 @@ class PGM:
 
 			w = dVy_dx - dVx_dy
 
-			#e_xx = dVx/dx # strain rate
-			#s_xx = 2 * eta_n[1:,1:] * e_xx 
-
-			#e_xy_ = (dVx_[1:-1,:]/dy + dVy_[:,1:-1]/dx) / 2
-			#s_xy_ = 2 * eta_s[1:-1,1:-1] * e_xy_
-
-			#s_xx_ = (s_xx[:-1,:-1] + s_xx[:-1,1:] + s_xx[1:,1:] + s_xx[1:,:-1]) / 4
-			#e_xx_ = (e_xx[:-1,:-1] + e_xx[:-1,1:] + e_xx[1:,1:] + e_xx[1:,:-1]) / 4
-
-			#sii = (s_xx_**2 + s_xy_**2)**.5
-
-			print (np.shape(s_xx),s_xy_.shape)
 			m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
-			m_s_xy = interpolate2m(mxx,myy,s_xy_)
-			
+			m_s_xy = interpolate2m(mxx,myy,s_xy)
+
 			m_w    = interpolate2m(mxx-.5 ,myy-.5 , w)
 			
 			m_a = m_w * dt
@@ -217,9 +222,6 @@ class PGM:
 			m_s_xy_ = m_s_xy + m_s_xy * 2 * m_a
 			m_s_xx, m_s_xy = m_s_xx_, m_s_xy_
 
-			Vx_average = 0.5*(Vx[1:-1,:-2]+Vx[:-2,:-2])
-			Vy_average = 0.5*(Vy[ :-2,1:-1]+Vy[:-2,:-2])
-			
 			mxx += m_Vx*dt/dx
 			myy += m_Vy*dt/dy
 
@@ -228,10 +230,10 @@ class PGM:
 
 			if Step % step : continue
 
-			self.plot(T, Step, eta_n, mxx, myy, m_cat, sii, P, Vx_average, Vy_average)
+			self.plot(T, Step, eta, mxx, myy, m_cat, sii, P, Vx, Vy)
 			self.save(Step, mxx, myy, m_cat, m_eta, m_rho, m_C, m_sinphi)
 
-	def plot(self,T, Step, eta_n, mxx, myy, m_cat, sii, P, Vx_average, Vy_average):
+	def plot(self,T, Step, eta_n, mxx, myy, m_cat, sii, P, Vx, Vy):
 		Myr = lambda t: t/(365.25*24*3600*10**6) # Convert seconds to millions of year
 
 		plt.clf()
@@ -255,15 +257,19 @@ class PGM:
 		plt.imshow(sii[:-1,:-1],interpolation='none')
 		plt.colorbar()
 
+		Vx_average = 0.5*(Vx[1:-1,:-2]+Vx[:-2,:-2])
+		Vy_average = 0.5*(Vy[ :-2,1:-1]+Vy[:-2,:-2])
+		print(Vx.shape, Vy.shape)
 		plt.subplot(2,2,4)
 		plt.title("P")
 		plt.imshow(P[1:,1:],interpolation='none')
 		plt.colorbar()
-		plt.streamplot(self.jj[:-2,:-2],self.ii[:-2,:-2],Vx_average,Vy_average,color='white')
+		print(self.jj.shape,self.ii.shape,Vx_average.shape,Vy_average.shape)
+		#plt.streamplot(self.jj[:-2,:-2],self.ii[:-2,:-2],Vx_average,Vy_average,color='white')
 		plt.ylim([self.i_res-2,0])
 		plt.xlim([0,self.j_res-2])
 
-		plt.savefig('%s/%12.8f.png' % (self.figname, Myr(T)))
+		plt.savefig('%s/%003d-%12.8f.png' % (self.figname, Step, Myr(T)))
 		plt.close(fig)
 
 	
