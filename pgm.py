@@ -17,11 +17,16 @@ def load_step(filename, Step):
 	mxx = data['arr_0']
 	myy = data['arr_1']
 	m_cat = data['arr_2']
-	m_eta = data['arr_3']
-	m_rho = data['arr_4']
-	m_C = data['arr_5']
-	m_sinphi = data['arr_6']
-
+	m_mu = data['arr_3']
+	m_eta = data['arr_4']
+	m_rho = data['arr_5']
+	m_C = data['arr_6']
+	m_sinphi = data['arr_7']
+	m_s_xx = data['arr_8']
+	m_s_xy = data['arr_9']
+	m_e_xx = data['arr_10']
+	m_e_xy = data['arr_11']
+	m_P    = data['arr_12']
 
 	width, height, j_res, i_res, gx_0, gy_0, right_bound, left_bound, top_bound, bottom_bound =\
 	                                                    np.loadtxt("%s/params.txt" % filename, unpack=True)
@@ -43,7 +48,8 @@ def load_step(filename, Step):
 	else:
 		bottom_bound = "noslip"
 
-	prop = {"mxx":mxx,"myy":myy,"m_cat":m_cat,"m_eta":m_eta,"m_rho":m_rho,"m_C":m_C,"m_sinphi":m_sinphi,
+	prop = {"mxx":mxx,"myy":myy,"m_cat":m_cat,"m_eta":m_eta,"m_rho":m_rho,"m_C":m_C,"m_sinphi":m_sinphi, "m_mu":m_mu,
+			"m_s_xx":m_s_xx, "m_s_xy":m_s_xy, "m_e_xx":m_e_xx, "m_e_xy":m_e_xy, "m_P":m_P,
 			"right_bound":right_bound, "left_bound":left_bound, "top_bound":top_bound, "bottom_bound":bottom_bound}
 
 	return width, height, j_res, i_res, gx_0, gy_0, right_bound, left_bound, top_bound, bottom_bound, prop
@@ -72,6 +78,11 @@ class PGM:
 		self.m_C = model_prop["m_C"]
 		self.m_mu = model_prop["m_mu"]
 		self.m_sinphi = model_prop["m_sinphi"]
+		self.m_s_xx = model_prop["m_s_xx"]
+		self.m_s_xy = model_prop["m_s_xy"]
+		self.m_e_xx = model_prop["m_e_xx"]
+		self.m_e_xy = model_prop["m_e_xy"]
+		self.m_P    = model_prop["m_P"]
 		self.right_bound = model_prop["right_bound"]
 		self.left_bound = model_prop["left_bound"]
 		self.top_bound = model_prop["top_bound"]
@@ -94,13 +105,14 @@ class PGM:
 		m_mu = self.m_mu
 		m_C = self.m_C
 		m_sinphi = self.m_sinphi
+		m_s_xx = self.m_s_xx
+		m_s_xy =  self.m_s_xy
+		m_e_xx =  self.m_e_xx
+		m_e_xy =  self.m_e_xy
+		m_P    =  self.m_P
+
 		m_s_ii_old = np.zeros(np.shape(mxx))
-		m_s_xx = np.zeros(np.shape(mxx))
-		m_s_xy = np.zeros(np.shape(mxx))
 		m_e_ii_old = np.zeros(np.shape(mxx))
-		m_e_xx = np.zeros(np.shape(mxx))
-		m_e_xy = np.zeros(np.shape(mxx))
-		m_P    = np.zeros(np.shape(mxx))
 		
 		i_res, j_res = self.i_res, self.j_res
 		dx, dy = self.dx, self.dy
@@ -109,7 +121,7 @@ class PGM:
 		p0cell = self.p0cell
 
 		eta_min = 1e+10
-		eta_max = 1e+24
+		eta_max = 1e+34
 
 		T = self.T
 		Step =  self.Step
@@ -154,9 +166,14 @@ class PGM:
 				mask = m_s_ii_yield <0
 				m_s_ii_yield[mask] = 0
 
-				ym = m_s_ii_yield < m_s_ii_new # yielding mask
-				if not np.all(ym):
+				ym = m_s_ii_yield > m_s_ii_new # yielding mask
+				check_for_plastic = False
+				#print("step")
+				if check_for_plastic and np.all(~ym):
+				#ym = m_s_ii_yield < m_s_ii_new # yielding mask
+				#if not np.all(ym):
 					plastic_yield = True
+					print("plastic yield!")
 
 					m_e_ii_old[ym] = np.sqrt(m_e_xx[ym]**2 + m_e_xy[ym]**2)
 					m_eta[ym]      = m_s_ii_yield[ym] /2/m_e_ii_old[ym]
@@ -164,9 +181,12 @@ class PGM:
 					m_s_xx[ym]     = m_s_xx[ym]*m_s_ii_yield[ym]/m_s_ii_old[ym]
 					m_s_xy[ym]     = m_s_xy[ym]*m_s_ii_yield[ym]/m_s_ii_old[ym]
 
-					# eta_min < eta < eta_max
-					m_eta[m_eta<eta_min] = eta_min
-					m_eta[m_eta>eta_max] = eta_max
+				# eta_min < eta < eta_max
+				print(m_eta.min(), m_eta.max())
+				m_eta[m_eta<eta_min] = eta_min
+				m_eta[m_eta>eta_max] = eta_max
+				print(m_eta.min(), m_eta.max())
+
 
 				# we should interpolate eta_n separately but actually eta_n and eta_s are equal
 				eta, rho, so_xx, so_xy = interpolate(mxx,myy,i_res,j_res, (m_eta, m_rho, m_s_xx, m_s_xy))
@@ -178,11 +198,6 @@ class PGM:
 				if np.isnan(mu).any(): fill_nans(mu)
 				if np.isnan(so_xx).any(): fill_nans(so_xx)
 				if np.isnan(so_xy).any(): fill_nans(so_xy)
-
-				#Z = dt*mu/(dt*mu + eta)
-				#eta = eta * Z
-				#sxx_0 = sxx_0 * (1 - Z)
-				#sxy_0 = sxy_0 * (1 - Z)
 
 				# compute viscoelastic (numerical) viscosity and stress
 				eta0 = eta
@@ -204,9 +219,6 @@ class PGM:
 				Vy = Stokes_solve[2::3].reshape((i_res),(j_res))
 
 				P *= kcont
-				#Vx *= kcont
-				#Vy *= kcont
-
 
 				Vx_max = np.abs(Vx).max()
 				Vy_max = np.abs(Vy).max()
@@ -241,26 +253,29 @@ class PGM:
 				d_sxx = s_xx - average(so_xx0)
 				d_sxy = s_xy - so_xy0
 
-				m_Vx = interpolate2m(mxx   , myy-.5, Vx[:-1,:])
-				m_Vy = interpolate2m(mxx-.5, myy   , Vy[:,:-1])
-				m_P  = interpolate2m(mxx-.5, myy-.5, P[1:,1:]) # tecnichaly, there must be +.5,+.5 but since we slice P, indexing goes one item lower
-				w = dVy_dx - dVx_dy
+				if not plastic_yield: break
 
-				m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
-				m_s_xy = interpolate2m(mxx,myy,s_xy)
+			m_Vx = interpolate2m(mxx   , myy-.5, Vx[:-1,:])
+			m_Vy = interpolate2m(mxx-.5, myy   , Vy[:,:-1])
+			m_P  = interpolate2m(mxx-.5, myy-.5, P[1:,1:]) # tecnichaly, there must be +.5,+.5 but since we slice P, indexing goes one item lower
 
-				m_w    = interpolate2m(mxx-.5 ,myy-.5 , w)
-				
-				m_a = m_w * dt
-				m_s_xx_ = m_s_xx - m_s_xy * 2 * m_a
-				m_s_xy_ = m_s_xy + m_s_xy * 2 * m_a
-				m_s_xx, m_s_xy = m_s_xx_, m_s_xy_
+			w = dVy_dx - dVx_dy
 
-				mxx += m_Vx*dt/dx
-				myy += m_Vy*dt/dy
+			m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
+			m_s_xy = interpolate2m(mxx,myy,s_xy)
 
-				T += dt
-				Step +=1
+			m_w    = interpolate2m(mxx-.5 ,myy-.5 , w)
+			
+			m_a = m_w * dt
+			m_s_xx_ = m_s_xx - m_s_xy * 2 * m_a
+			m_s_xy_ = m_s_xy + m_s_xy * 2 * m_a
+			m_s_xx, m_s_xy = m_s_xx_, m_s_xy_
+
+			mxx += m_Vx*dt/dx
+			myy += m_Vy*dt/dy
+
+			T += dt
+			Step +=1
 
 			#s_xx = 2 * eta[1:,1:] * e_xx
 
@@ -277,7 +292,7 @@ class PGM:
 			if Step % step : continue
 
 			self.plot(T, Step, eta, mxx, myy, m_cat, s_ii, P, Vx, Vy)
-			self.save(Step, mxx, myy, m_cat, m_eta, m_rho, m_C, m_sinphi)
+			self.save(Step, mxx, myy, m_cat, m_mu, m_eta, m_rho, m_C, m_sinphi, m_s_xx, m_s_xy, m_e_xx, m_e_xy, m_P)
 
 	def plot(self,T, Step, eta_n, mxx, myy, m_cat, sii, P, Vx, Vy):
 		Myr = lambda t: t/(365.25*24*3600*10**6) # Convert seconds to millions of year
@@ -317,6 +332,6 @@ class PGM:
 		plt.close(fig)
 
 	
-	def save(self, Step, mxx, myy, m_cat, m_eta, m_rho, m_C, m_sinphi):
+	def save(self, Step, mxx, myy, m_cat, m_mu, m_eta, m_rho, m_C, m_sinphi, m_s_xx, m_s_xy, m_e_xx, m_e_xy, m_P):
 		Myr = lambda t: t/(365.25*24*3600*10**6) # Convert seconds to millions of year
-		np.savez("%s/%s.npz" % (self.figname, Step), mxx, myy, m_cat, m_eta, m_rho, m_C, m_sinphi)
+		np.savez("%s/%s.npz" % (self.figname, Step), mxx, myy, m_cat, m_mu, m_eta, m_rho, m_C, m_sinphi, m_s_xx, m_s_xy, m_e_xx, m_e_xy, m_P)

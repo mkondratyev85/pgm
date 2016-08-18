@@ -240,6 +240,11 @@ def load_model(i_res, j_res, marker_density):
 	m_mu = mu_key[values]
 	m_C = C_key[values]
 	m_sinphi = sinphi_key[values]
+	m_s_xx = np.zeros(np.shape(mxx))
+	m_s_xy = np.zeros(np.shape(mxx))
+	m_e_xx = np.zeros(np.shape(mxx))
+	m_e_xy = np.zeros(np.shape(mxx))
+	m_P    = np.zeros(np.shape(mxx))
 
 	top_bound = "{top:s}"
 	bottom_bound = "{bottom:s}"
@@ -248,7 +253,8 @@ def load_model(i_res, j_res, marker_density):
 
 	model_prop = {p:s} "mxx":mxx, "myy":myy, "m_cat": m_cat, "m_rho":m_rho, "m_eta":m_eta, "m_mu":m_mu, 
 	"m_C":m_C, "m_sinphi":m_sinphi, "top_bound":top_bound, "bottom_bound":bottom_bound, 
-	"left_bound":left_bound, "right_bound":right_bound {p2:s}
+	"left_bound":left_bound, "right_bound":right_bound,
+	"m_s_xx": m_s_xx, "m_s_xy": m_s_xy, "m_e_xx": m_e_xx, "m_e_xy": m_e_xy, "m_P": m_P {p2:s}
 
 	return model_prop"""
 	

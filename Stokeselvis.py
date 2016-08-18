@@ -14,7 +14,9 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 	# x-Stokes: ETA(d2vx/dx2+d2vx/dy2)-dP/dx=0
 	# y-Stokes: ETA(d2vy/dx2+d2vy/dy2)-dP/dy=gy*RHO
 	# continuity: dvx/dx+dvy/dy=0
-	# Boundary conditions: free slip
+
+	kbond   = 4*eta_s.min()/((dx+dy)**2)
+	kcont   = 2*eta_s.min()/(dx+dy)
 	
 	row = []
 	col = []
