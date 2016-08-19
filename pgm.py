@@ -187,27 +187,37 @@ class PGM:
 
 
 				# we should interpolate eta_n separately but actually eta_n and eta_s are equal
-				eta, rho, so_xx, so_xy = interpolate(mxx,myy,i_res,j_res, (m_eta, m_rho, m_s_xx, m_s_xy))
-				mu = interpolate_harmonic(mxx,myy,i_res,j_res, m_mu )
+				#eta, rho, so_xx, so_xy = interpolate(mxx,myy,i_res,j_res, (m_eta, m_rho, m_s_xx, m_s_xy))
+				eta_s, rho, so_xy = interpolate(mxx,myy,i_res,j_res, (m_eta, m_rho, m_s_xy))
+				eta_n, so_xx = interpolate(mxx+.5,myy+.5,i_res,j_res, (m_eta, m_s_xx))
+				#mu = interpolate_harmonic(mxx,myy,i_res,j_res, m_mu )
+				mu_s = interpolate_harmonic(mxx,myy,i_res,j_res, m_mu )
+				mu_n = interpolate_harmonic(mxx+.5,myy+.5,i_res,j_res, m_mu )
+				print(mu_s.shape,mu_n.shape)
 
 				#Check if we have nans
-				if np.isnan(eta).any(): fill_nans(eta)
+				if np.isnan(eta_s).any(): fill_nans(eta_s)
+				if np.isnan(eta_n).any(): fill_nans(eta_n)
 				if np.isnan(rho).any(): fill_nans(rho)
-				if np.isnan(mu).any(): fill_nans(mu)
+				if np.isnan(mu_s).any(): fill_nans(mu_s)
+				if np.isnan(mu_n).any(): fill_nans(mu_n)
 				if np.isnan(so_xx).any(): fill_nans(so_xx)
 				if np.isnan(so_xy).any(): fill_nans(so_xy)
 
 				# compute viscoelastic (numerical) viscosity and stress
-				eta0 = eta
+				eta_s0 = eta_s
+				eta_n0 = eta_n
 				so_xy0 = so_xy
 				so_xx0 = so_xx
-				xelvis = eta/(eta+dt*mu)
-				eta = eta*(1-xelvis)
-				so_xy = so_xy*xelvis
-				so_xx = so_xx*xelvis
+				xelvis_s = eta_s/(eta_s+dt*mu_s)
+				xelvis_n = eta_n/(eta_n+dt*mu_n)
+				eta_s = eta_s*(1-xelvis_s)
+				eta_n = eta_n*(1-xelvis_n)
+				so_xy = so_xy*xelvis_s
+				so_xx = so_xx*xelvis_n
 
 				Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy, 
-						eta, eta, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell, 
+						eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell, 
 						lower_boundary=self.bottom_bound, upper_boundary=self.top_bound,
 						right_boundary=self.right_bound, left_boundary=self.left_bound)
 
@@ -244,8 +254,10 @@ class PGM:
 
 				e_xx = dVx_dx # strain rate
 				e_xy = .5 * (dVx_dy + dVy_dx)
-				s_xx = (1-average(xelvis))*2*average(eta0)*e_xx + average(xelvis)*average(so_xx0)
-				s_xy = (1-xelvis)*2*eta0*e_xy + xelvis*so_xy0
+				print(e_xx.shape,eta_s0.shape,so_xx0.shape)
+				print(P.shape)
+				s_xx = (1-xelvis_n[1:,1:])*2*eta_n0[1:,1:]*e_xx + xelvis_n[1:,1:]*so_xx0[1:,1:]
+				s_xy = (1-xelvis_s)*2*eta_s0*e_xy + xelvis_s*so_xy0
 				s_ii = (s_xx**2 + average(s_xy**2))**.5
 
 				d_sxx = s_xx - average(so_xx0)
@@ -296,10 +308,10 @@ class PGM:
 
 			if Step % step : continue
 
-			self.plot(T, Step, eta, mxx, myy, m_cat, s_ii, P, Vx, Vy)
+			self.plot(T, Step, eta_s, mxx, myy, m_cat, s_ii, P, Vx, Vy, e_xx, e_xy, s_xx, s_xy, xelvis_s, mu_n, mu_s )
 			self.save(Step, mxx, myy, m_cat, m_mu, m_eta, m_rho, m_C, m_sinphi, m_s_xx, m_s_xy, m_e_xx, m_e_xy, m_P)
 
-	def plot(self,T, Step, eta_n, mxx, myy, m_cat, sii, P, Vx, Vy):
+	def plot(self,T, Step, eta_n, mxx, myy, m_cat, sii, P, Vx, Vy, e_xx, e_xy, s_xx, s_xy, xelvis, mu_n, mu_s):
 		Myr = lambda t: t/(365.25*24*3600*10**6) # Convert seconds to millions of year
 
 		plt.clf()
@@ -307,25 +319,66 @@ class PGM:
 
 		plt.suptitle("Model size: %s km x %s km (%s x %s cells, dx=%s km, dy=%s km). Current Time: %07.3f Myr. Step %s git verstion: %s" %
 					(self.width/1000, self.height/1000, self.j_res, self.i_res, self.dx/1000, self.dy/1000, Myr(T), Step, self.label))
-		plt.subplot(2,2,1)
+		plt.subplot(3,4,1)
 		plt.title("Viscosity")
 		plt.imshow(eta_n,interpolation='none',cmap='copper')
 		plt.colorbar()
 		
-		plt.subplot(2,2,2)
+		plt.subplot(3,4,2)
 		plt.scatter(mxx,myy,c=m_cat,s=1,edgecolors='face',cmap='copper')
 		plt.colorbar()
 		plt.ylim([self.i_res-1,0])
 		plt.xlim([0,self.j_res-1])
+
+		plt.subplot(3,4,5)
+		plt.title("Vx")
+		plt.imshow(Vx,interpolation='none')
+		plt.colorbar()
+
+		plt.subplot(3,4,6)
+		plt.title("Vy")
+		plt.imshow(Vy,interpolation='none')
+		plt.colorbar()
+
+		plt.subplot(3,4,7)
+		plt.title("e_xx")
+		plt.imshow(e_xx,interpolation='none')
+		plt.colorbar()
+
+		plt.subplot(3,4,8)
+		plt.title("e_xy")
+		plt.imshow(e_xy,interpolation='none')
+		plt.colorbar()
+
+		plt.subplot(3,4,9)
+		plt.title("s_xx")
+		plt.imshow(s_xx,interpolation='none')
+		plt.colorbar()
+
+		plt.subplot(3,4,10)
+		plt.title("s_xy")
+		plt.imshow(s_xy,interpolation='none')
+		plt.colorbar()
+
+		plt.subplot(3,4,11)
+		plt.title("mu_n")
+		plt.imshow(mu_n,interpolation='none')
+		plt.colorbar()
+
+		plt.subplot(3,4,12)
+		plt.title("mu_s")
+		plt.imshow(mu_s,interpolation='none')
+		plt.colorbar()
+
 		
-		plt.subplot(2,2,3)
+		plt.subplot(3,4,3)
 		plt.title("Sigma II")
 		plt.imshow(sii[:-1,:-1],interpolation='none')
 		plt.colorbar()
 
 		Vx_average = 0.5*(Vx[1:-1,:-2]+Vx[:-2,:-2])
 		Vy_average = 0.5*(Vy[ :-2,1:-1]+Vy[:-2,:-2])
-		plt.subplot(2,2,4)
+		plt.subplot(3,4,4)
 		plt.title("P")
 		plt.imshow(P[1:,1:],interpolation='none')
 		plt.colorbar()
