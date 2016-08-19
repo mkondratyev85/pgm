@@ -182,10 +182,8 @@ class PGM:
 					m_s_xy[ym]     = m_s_xy[ym]*m_s_ii_yield[ym]/m_s_ii_old[ym]
 
 				# eta_min < eta < eta_max
-				print(m_eta.min(), m_eta.max())
 				m_eta[m_eta<eta_min] = eta_min
 				m_eta[m_eta>eta_max] = eta_max
-				print(m_eta.min(), m_eta.max())
 
 
 				# we should interpolate eta_n separately but actually eta_n and eta_s are equal
@@ -257,12 +255,19 @@ class PGM:
 
 			m_Vx = interpolate2m(mxx   , myy-.5, Vx[:-1,:])
 			m_Vy = interpolate2m(mxx-.5, myy   , Vy[:,:-1])
-			m_P  = interpolate2m(mxx-.5, myy-.5, P[1:,1:]) # tecnichaly, there must be +.5,+.5 but since we slice P, indexing goes one item lower
+			m_P  = interpolate2m(mxx-.5, myy-.5, P[1:,1:]) # tecnichaly, there must be +.5,+.5 
+			                                               # but since we slice P, indexing goes one item lower
 
 			w = dVy_dx - dVx_dy
 
-			m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
-			m_s_xy = interpolate2m(mxx,myy,s_xy)
+			#m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
+			#m_s_xy = interpolate2m(mxx,myy,s_xy)
+			m_ds_xx = interpolate2m(mxx-.5,myy-.5,d_sxx)
+			m_ds_xy = interpolate2m(mxx,myy,d_sxy)
+			m_s_xx = m_s_xx + m_ds_xx
+			m_s_xy = m_s_xy + m_ds_xy
+			m_e_xx = interpolate2m(mxx-.5,myy-.5,e_xx)
+			m_e_xy = interpolate2m(mxx,myy,e_xy)
 
 			m_w    = interpolate2m(mxx-.5 ,myy-.5 , w)
 			
