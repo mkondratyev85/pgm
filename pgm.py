@@ -187,13 +187,10 @@ class PGM:
 
 
 				# we should interpolate eta_n separately but actually eta_n and eta_s are equal
-				#eta, rho, so_xx, so_xy = interpolate(mxx,myy,i_res,j_res, (m_eta, m_rho, m_s_xx, m_s_xy))
 				eta_s, rho, so_xy = interpolate(mxx,myy,i_res,j_res, (m_eta, m_rho, m_s_xy))
 				eta_n, so_xx = interpolate(mxx+.5,myy+.5,i_res,j_res, (m_eta, m_s_xx))
-				#mu = interpolate_harmonic(mxx,myy,i_res,j_res, m_mu )
 				mu_s = interpolate_harmonic(mxx,myy,i_res,j_res, m_mu )
 				mu_n = interpolate_harmonic(mxx+.5,myy+.5,i_res,j_res, m_mu )
-				print(mu_s.shape,mu_n.shape)
 
 				#Check if we have nans
 				if np.isnan(eta_s).any(): fill_nans(eta_s)
@@ -239,6 +236,9 @@ class PGM:
 				dVx_dx = (Vx[:-1,1:] - Vx[:-1,:-1])/dx
 				dVy_dy = (Vy[1:,:-1] - Vy[:-1,:-1])/dy
 
+				#dVx_dy = (Vx[:-1,1:] - Vx[:-1,:-1])/dy
+				#dVy_dx = (Vy[1:,:-1] - Vy[:-1,:-1])/dx
+				
 				dVx_dy = (Vx[1:-1,:] - Vx[:-2,:])/dy
 				dVy_dx = (Vy[:,1:-1] - Vy[:,:-2])/dx
 
@@ -254,8 +254,6 @@ class PGM:
 
 				e_xx = dVx_dx # strain rate
 				e_xy = .5 * (dVx_dy + dVy_dx)
-				print(e_xx.shape,eta_s0.shape,so_xx0.shape)
-				print(P.shape)
 				s_xx = (1-xelvis_n[1:,1:])*2*eta_n0[1:,1:]*e_xx + xelvis_n[1:,1:]*so_xx0[1:,1:]
 				s_xy = (1-xelvis_s)*2*eta_s0*e_xy + xelvis_s*so_xy0
 				s_ii = (s_xx**2 + average(s_xy**2))**.5
@@ -272,12 +270,13 @@ class PGM:
 
 			w = dVy_dx - dVx_dy
 
-			#m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
-			#m_s_xy = interpolate2m(mxx,myy,s_xy)
-			m_ds_xx = interpolate2m(mxx-.5,myy-.5,d_sxx)
-			m_ds_xy = interpolate2m(mxx,myy,d_sxy)
-			m_s_xx = m_s_xx + m_ds_xx
-			m_s_xy = m_s_xy + m_ds_xy
+			m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
+			m_s_xy = interpolate2m(mxx,myy,s_xy)
+			#m_ds_xx = interpolate2m(mxx-.5,myy-.5,d_sxx)
+			#m_ds_xy = interpolate2m(mxx,myy,d_sxy)
+			#m_s_xx = m_s_xx + m_ds_xx
+			#m_s_xy = m_s_xy + m_ds_xy
+
 			m_e_xx = interpolate2m(mxx-.5,myy-.5,e_xx)
 			m_e_xy = interpolate2m(mxx,myy,e_xy)
 
@@ -308,14 +307,14 @@ class PGM:
 
 			if Step % step : continue
 
-			self.plot(T, Step, eta_s, mxx, myy, m_cat, s_ii, P, Vx, Vy, e_xx, e_xy, s_xx, s_xy, xelvis_s, mu_n, mu_s )
+			self.plot(T, Step, eta_s, mxx, myy, m_cat, s_ii, P, Vx, Vy, e_xx, e_xy, s_xx, s_xy, xelvis_s, mu_n, mu_s, w )
 			self.save(Step, mxx, myy, m_cat, m_mu, m_eta, m_rho, m_C, m_sinphi, m_s_xx, m_s_xy, m_e_xx, m_e_xy, m_P)
 
-	def plot(self,T, Step, eta_n, mxx, myy, m_cat, sii, P, Vx, Vy, e_xx, e_xy, s_xx, s_xy, xelvis, mu_n, mu_s):
+	def plot(self,T, Step, eta_n, mxx, myy, m_cat, sii, P, Vx, Vy, e_xx, e_xy, s_xx, s_xy, xelvis, mu_n, mu_s, w):
 		Myr = lambda t: t/(365.25*24*3600*10**6) # Convert seconds to millions of year
 
 		plt.clf()
-		fig = plt.figure(figsize=(15,10))
+		fig = plt.figure(figsize=(30,20))
 
 		plt.suptitle("Model size: %s km x %s km (%s x %s cells, dx=%s km, dy=%s km). Current Time: %07.3f Myr. Step %s git verstion: %s" %
 					(self.width/1000, self.height/1000, self.j_res, self.i_res, self.dx/1000, self.dy/1000, Myr(T), Step, self.label))
@@ -366,8 +365,8 @@ class PGM:
 		plt.colorbar()
 
 		plt.subplot(3,4,12)
-		plt.title("mu_s")
-		plt.imshow(mu_s,interpolation='none')
+		plt.title("w")
+		plt.imshow(w,interpolation='none')
 		plt.colorbar()
 
 		
@@ -382,7 +381,7 @@ class PGM:
 		plt.title("P")
 		plt.imshow(P[1:,1:],interpolation='none')
 		plt.colorbar()
-		#plt.streamplot(self.jj[:-2,:-2],self.ii[:-2,:-2],Vx_average,Vy_average,color='white')
+		plt.streamplot(self.jj[:-2,:-2],self.ii[:-2,:-2],Vx_average,Vy_average,color='white')
 		plt.ylim([self.i_res-2,0])
 		plt.xlim([0,self.j_res-2])
 
