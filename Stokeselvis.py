@@ -9,14 +9,15 @@ def add_to_sparse(x,y,value,row,col,data):
 
 def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, gy_0, sxx, sxy, kbond, kcont, p0cell, Vbound={},
 		                        lower_boundary="slip", upper_boundary="slip",
-								left_boundary="slip", right_boundary="slip"):
+								left_boundary="slip", right_boundary="slip",
+					Vx_= {}, Vy_={}):
 	# Constructing sparse matrix for solving: x-Stokes, y-Stokes and continuity equations
 	# x-Stokes: ETA(d2vx/dx2+d2vx/dy2)-dP/dx=0
 	# y-Stokes: ETA(d2vy/dx2+d2vy/dy2)-dP/dy=gy*RHO
 	# continuity: dvx/dx+dvy/dy=0
 
-	kbond   = 4*eta_s.min()/((dx+dy)**2)
-	kcont   = 2*eta_s.min()/(dx+dy)
+	#kbond   = 4*eta_s.min()/((dx+dy)**2)
+	#kcont   = 2*eta_s.min()/(dx+dy)
 	
 	row = []
 	col = []
@@ -101,9 +102,9 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 					add_to_sparse(Vx(k[i][j]),Vx(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vx(i,j)
 					add_to_sparse(Vx(k[i][j]),Vx(k[i-1][j]) ,-(1.0/3)*kbond  ,row,col,data) #Coefficient for Vx(i-1,j)
 					vector[Vx(k[i][j])] = 0                                                 # Right-hand-side part
-			elif (i,j) in Vbound:
+			elif "%i,%i" % (i,j) in Vx_:
 				add_to_sparse(Vx(k[i][j]), Vx(k[i][j]), kbond ,row,col,data)
-				vector[Vx(k[i][j])] = Vbound[(i,j)][0]*kcont
+				vector[Vx(k[i][j])] = Vx_["%i,%i" % (i,j)]*kcont
 			else:
 				# Internal nodes: dSxx/dx+dSxy/dy-dP/dx=0    
 				# dSxx/dx=2*etan(i+1,j+1)*(vx(i,j+1)-vx(i,j))/dx^2-2*etan(i+1,j)*(vx(i,j)-vx(i,j-1))/dx^2
@@ -161,9 +162,9 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 					add_to_sparse(Vy(k[i][j]),Vy(k[i][j]) ,   kbond          ,row,col,data) # Coefficient for Vy(i,j)
 					add_to_sparse(Vy(k[i][j]),Vy(k[i][j-1]) ,-(1.0/3)*kbond  ,row,col,data) # Coefficient for Vy(i,j-1)
 					vector[Vy(k[i][j])] = 0                                                 # Right-hand-side part
-			elif (i,j) in Vbound:
+			elif "%i,%i" % (i,j) in Vy_:
 				add_to_sparse(Vy(k[i][j]), Vy(k[i][j]), kbond ,row,col,data)
-				vector[Vy(k[i][j])] = Vbound[(i,j)][1]
+				vector[Vy(k[i][j])] = Vy_["%i,%i" % (i,j)]*kcont
 			else:
 				# Internal nodes: dSyy/dy+dSxy/dx-dP/dy=-gy*RHO
 				#dSyy/dy=2*etan(i+1,j+1)*(vy(i+1,j)-vy(i,j))/dy^2-2*etan(i,j+1)*(vy(i,j)-vy(i-1,j))/dy^2

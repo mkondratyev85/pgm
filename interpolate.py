@@ -18,9 +18,9 @@ def interpolate2m(mxx,myy,B):
 		if (i > i_res-2) and (j > j_res-2):
 			values[idx] = B[i,j]
 		elif i > i_res-2:
-			values[idx] = (B[i,j]*(1-x) + B[i,j+1]*x)*2
+			values[idx] = (B[i,j]*(1-x) + B[i,j+1]*x)
 		elif j > j_res-2: 
-			values[idx] = (B[i,j]*(1-y) + B[i+1,j]*y)*2
+			values[idx] = (B[i,j]*(1-y) + B[i+1,j]*y)
 		else:
 			values[idx] = B[i,j]*(1-x)*(1-y) + B[i,j+1]*x*(1-y) + B[i+1,j]*(1-x)*y + B[i+1,j+1]*x*y
 	return values

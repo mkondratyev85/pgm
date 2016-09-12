@@ -4,6 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib import pylab as plt
 from scipy import ndimage
 import numpy as np
+import pickle
 
 
 if sys.version_info[0] < 3:
@@ -52,9 +53,36 @@ materials = {"default":{"mu":1,"rho":1,"eta":1, "C":1, "sinphi":1},
 		"sand" :{"mu":10**6,"rho":1560,"eta":10**9, "C":10,"sinphi":np.sin(np.radians(36))},
 		"viso-elastic slab" :{"mu":10**10,"rho":4000,"eta":10**27, "C":10,"sinphi":np.sin(np.radians(36))},
 		"viso-elastic medium" :{"mu":10**20,"rho":1,"eta":10**24, "C":10,"sinphi":np.sin(np.radians(36))},
+		"rigid body" :{"mu":10**20,"rho":3000,"eta":10**25, "C":0,"sinphi":np.sin(np.radians(36))},
 		"sticky air": {"mu":10**6,"rho":1,"eta":10**2,"C":10,"sinphi":0}}
 
+def velocity_changed(*args):
+	global point_listbox, moving_points
+	if selected_point: 
+		try:
+			moving_points[selected_point-1][0] = float( Vx_var.get())
+		except:
+			pass
+		try:
+			moving_points[selected_point-1][1] = float(Vy_var.get())
+		except:
+			pass
+		point_listbox.delete(0, Tk.END)
+		for i in range(len(moving_points.get())):
+			point_listbox.insert(Tk.END, "%s : %s" % (i+1, moving_points.get()[i]))
+		point_listbox.activate(selected_point)
+	else:
+		point_listbox.delete(0, Tk.END)
+		for i in range(len(moving_points.get())):
+			point_listbox.insert(Tk.END, "%s : %s" % (i+1, moving_points.get()[i]))
+
 selected_category = None
+
+moving_points = observable([])
+moving_points.bind(velocity_changed)
+
+selected_point = None
+
 
 def material_changed(*args, **kwargs):
 	global listbox, model_materials
@@ -73,11 +101,23 @@ def material_selected(*args):
 		                                   "mu":materials[selectedmaterial]["mu"],
 		                                   "C":materials[selectedmaterial]["C"],
 		                                   "sinphi":materials[selectedmaterial]["sinphi"], }
-	muvar.set("mu = %s" % model_materials.get()[selected_category]["mu"])
-	rhovar.set("rho = %s" % model_materials.get()[selected_category]["rho"])
-	etavar.set("eta = %s" % model_materials.get()[selected_category]["eta"])
-	Cvar.set("C = %s" % model_materials.get()[selected_category]["C"])
-	sinphivar.set("sinphi = %s" % model_materials.get()[selected_category]["sinphi"])
+	muvar.set("mu = %.2E" % model_materials.get()[selected_category]["mu"])
+	rhovar.set("rho = %.2E" % model_materials.get()[selected_category]["rho"])
+	etavar.set("eta = %.2E" % model_materials.get()[selected_category]["eta"])
+	Cvar.set("C = %.2E" % model_materials.get()[selected_category]["C"])
+	sinphivar.set("sinphi = %.2E" % model_materials.get()[selected_category]["sinphi"])
+
+def point_listbox_get(event):
+	l = event.widget
+	sel = int(l.curselection()[0])
+	#image_to_show = image.copy()
+	#image_to_show[image_to_show == sel] = -1
+	#redraw_canvas(image_to_show)
+	global selected_point
+	selected_point = sel+1
+	Vx_var.set(moving_points.get()[sel][0])
+	Vy_var.set(moving_points.get()[sel][1])
+	redraw_canvas(image)
 
 def listbox_get(event):
 	l = event.widget
@@ -91,8 +131,36 @@ def listbox_get(event):
 	materialvar.set(selectedmaterial)
 
 def redraw_canvas(im_to_show):
+	ax.clear()
+	im = plt.imshow(image,cmap=my_cmap,interpolation="nearest")
 	im.set_data(im_to_show)
+	for point in moving_points:
+		x,y = point[2],point[3]
+		Vx, Vy = point[0],point[1]
+		plt.scatter(x,y,c="blue")
+		if Vx == 0 and Vy ==0: continue
+		ax.quiver(x,y,Vx,Vy,angles='xy',scale_units='xy',color="blue")
+	if selected_point:
+		point  = moving_points[selected_point-1]
+		x,y = point[2],point[3]
+		Vx, Vy = point[0],point[1]
+		plt.scatter(x,y,c="red")
+		if not( Vx == 0 and Vy ==0):
+			ax.quiver(x,y,Vx,Vy,angles='xy',scale_units='xy',color="red")
+	width = image.shape[0]
+	height = image.shape[1]
+	plt.ylim([height-.5,-.5])
+	plt.xlim([-.5,width-.5])
 	canvas.draw()
+
+def on_click(event):
+	global moving_points
+	if selected_point:
+		print (selected_point)
+		moving_points[selected_point-1][2] = event.xdata
+		moving_points[selected_point-1][3] = event.ydata
+		redraw_canvas(image)
+	print( moving_points.get())
 
 
 root = Tk.Tk()
@@ -131,6 +199,7 @@ ax = plt.gca()
 canvas = FigureCanvasTkAgg(fig, master=root)
 canvas.show()
 canvas.get_tk_widget().pack(side=Tk.LEFT, fill=Tk.BOTH)
+canvas.callbacks.connect('button_press_event', on_click)
 
 
 group = Tk.Frame(root)
@@ -192,6 +261,36 @@ rightvar.set("sleep")
 topvar.set("sleep")
 bottomvar.set("sleep")
 
+movinggroup = Tk.LabelFrame(group, text="Moving points:")
+movinggroup.pack(fill=Tk.X)
+
+point_listbox = Tk.Listbox(movinggroup)
+point_listbox.bind("<<ListboxSelect>>", point_listbox_get)
+point_listbox.pack(fill=Tk.X)
+
+def add_point(*args):
+	width = image.shape[0]
+	height = image.shape[1]
+	moving_points.append([0,0,width/2,height/2])
+	redraw_canvas(image)
+
+def delete_point(*args):
+	pass
+
+Vx_var = Tk.StringVar()
+Vx_var.trace("w", velocity_changed)
+Vxlabel = Tk.Label(movinggroup,text="Vx =").pack()
+VxEntry = Tk.Entry(movinggroup,textvariable=Vx_var).pack()
+
+Vy_var = Tk.StringVar()
+Vy_var.trace("w", velocity_changed)
+Vylabel = Tk.Label(movinggroup,text="Vy =").pack()
+VyEntry = Tk.Entry(movinggroup,textvariable=Vy_var).pack()
+
+button_add_move = Tk.Button(movinggroup, text = 'Add moving point...', command = add_point).pack()
+button_delete_move = Tk.Button(movinggroup, text = 'Delete moving point...', command = delete_point).pack()
+
+
 def quit(*args):
 	print ('quit button press...')
 	root.quit()
@@ -202,6 +301,7 @@ def save(*args):
 	fname = Tk.filedialog.asksaveasfilename()
 	template = """import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 
 def load_model(i_res, j_res, marker_density):
 	image = np.load("{fname:s}.npy")
@@ -251,10 +351,20 @@ def load_model(i_res, j_res, marker_density):
 	left_bound = "{left:s}"
 	right_bound = "{right:s}"
 
+
+	with open('{fname:s}.points', 'rb') as f:
+		moving_points = pickle.load(f)
+	for (i,point) in enumerate(moving_points):
+		px = (point[2]+.5) * (j_res-1)/ image_j
+		py = (point[3]+.5) * (i_res-1)/ image_i
+		moving_points[i][2] = px
+		moving_points[i][3] = py
+
 	model_prop = {p:s} "mxx":mxx, "myy":myy, "m_cat": m_cat, "m_rho":m_rho, "m_eta":m_eta, "m_mu":m_mu, 
 	"m_C":m_C, "m_sinphi":m_sinphi, "top_bound":top_bound, "bottom_bound":bottom_bound, 
 	"left_bound":left_bound, "right_bound":right_bound,
-	"m_s_xx": m_s_xx, "m_s_xy": m_s_xy, "m_e_xx": m_e_xx, "m_e_xy": m_e_xy, "m_P": m_P {p2:s}
+	"m_s_xx": m_s_xx, "m_s_xy": m_s_xy, "m_e_xx": m_e_xx, "m_e_xy": m_e_xy, "m_P": m_P,
+	"moving_points" : moving_points {p2:s}
 
 	return model_prop"""
 	
@@ -276,6 +386,10 @@ def load_model(i_res, j_res, marker_density):
 	with  open('%s.py' % fname ,'w') as myfile:
 		  myfile.write(template.format(**context))
 	np.save("%s" % (fname), image)
+
+	# Saving the moving points:
+	with open("%s.points" % fname, 'wb') as f:  # Python 3: open(..., 'wb')
+	    pickle.dump(moving_points.get(), f)
 
 button_save = Tk.Button(group, text = 'Save...', command = save).pack()
 
