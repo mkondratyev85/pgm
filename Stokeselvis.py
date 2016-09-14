@@ -104,7 +104,7 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 					vector[Vx(k[i][j])] = 0                                                 # Right-hand-side part
 			elif "%i,%i" % (i,j) in Vx_:
 				add_to_sparse(Vx(k[i][j]), Vx(k[i][j]), kbond ,row,col,data)
-				vector[Vx(k[i][j])] = Vx_["%i,%i" % (i,j)]*kcont
+				vector[Vx(k[i][j])] = Vx_["%i,%i" % (i,j)]#*kcont
 			else:
 				# Internal nodes: dSxx/dx+dSxy/dy-dP/dx=0    
 				# dSxx/dx=2*etan(i+1,j+1)*(vx(i,j+1)-vx(i,j))/dx^2-2*etan(i+1,j)*(vx(i,j)-vx(i,j-1))/dx^2
@@ -164,7 +164,7 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 					vector[Vy(k[i][j])] = 0                                                 # Right-hand-side part
 			elif "%i,%i" % (i,j) in Vy_:
 				add_to_sparse(Vy(k[i][j]), Vy(k[i][j]), kbond ,row,col,data)
-				vector[Vy(k[i][j])] = Vy_["%i,%i" % (i,j)]*kcont
+				vector[Vy(k[i][j])] = Vy_["%i,%i" % (i,j)]#*kcont
 			else:
 				# Internal nodes: dSyy/dy+dSxy/dx-dP/dy=-gy*RHO
 				#dSyy/dy=2*etan(i+1,j+1)*(vy(i+1,j)-vy(i,j))/dy^2-2*etan(i,j+1)*(vy(i,j)-vy(i-1,j))/dy^2

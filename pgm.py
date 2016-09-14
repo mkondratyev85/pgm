@@ -94,8 +94,8 @@ class PGM:
 		self.T = T
 		self.Step = T
 
-		self.kbond   = 4*self.m_eta.min()/((self.dx+self.dy)**2)
-		self.kcont   = 2*self.m_eta.min()/(self.dx+self.dy)
+		#self.kbond   = 4*self.m_eta.min()/((self.dx+self.dy)**2)
+		#self.kcont   = 2*self.m_eta.min()/(self.dx+self.dy)
 		self.label = subprocess.check_output(["git", "describe", "--always"])[:-1].decode('utf-8')
 
 	def run(self, maxT, step, cell_step, filename, dt_min=1e+10):
@@ -120,7 +120,7 @@ class PGM:
 		i_res, j_res = self.i_res, self.j_res
 		dx, dy = self.dx, self.dy
 		gx_0, gy_0 = self.gx_0, self.gy_0
-		kbond, kcont = self.kbond, self.kcont
+		#kbond, kcont = self.kbond, self.kcont
 		p0cell = self.p0cell
 
 		eta_min = 1e+2
@@ -155,7 +155,7 @@ class PGM:
 
 		dt = 1e+10
 		dt0 = dt
-		plastic_iterations = 10
+		plastic_iterations = 1
 		plastic_mask = np.zeros(mxx.shape).astype("bool")
 		while T < maxT:
 			#dt = max(dt, dt_min)
@@ -163,11 +163,11 @@ class PGM:
 			was_plastic = False
 			for i in range(plastic_iterations):
 				if Myr(T) > 10: gy_0 = 0
-				print (dt,dt0)
+				print ("T:%s, dt:%s, dt0:%s" % (T,dt,dt0))
 
 				plastic_yield = False
 
-				m_xelvis = m_eta/(m_mu*dt0 + m_eta)
+				m_xelvis = m_eta/(m_mu*dt + m_eta)
 				m_s_xx_new = m_s_xx*m_xelvis + 2*m_eta*m_e_xx*(1-m_xelvis)
 				m_s_xy_new = m_s_xy*m_xelvis + 2*m_eta*m_e_xy*(1-m_xelvis)
 
@@ -192,8 +192,8 @@ class PGM:
 					m_s_xx[ym]     = m_s_xx[ym]*m_s_ii_yield[ym]/m_s_ii_old[ym]
 					m_s_xy[ym]     = m_s_xy[ym]*m_s_ii_yield[ym]/m_s_ii_old[ym]
 
-					m_eta[m_eta<eta_min] = eta_min
-					m_eta[m_eta>eta_max] = eta_max
+					#m_eta[m_eta<eta_min] = eta_min
+					#m_eta[m_eta>eta_max] = eta_max
 					plastic_current_mask = ym
 					plastic_mask = np.logical_or(plastic_mask, ym)
 
@@ -201,9 +201,16 @@ class PGM:
 				eta_n, so_xx = interpolate(mxx+.5,myy+.5,i_res,j_res, (m_eta, m_s_xx))
 				mu_s = interpolate_harmonic(mxx,myy,i_res,j_res, m_mu )
 				mu_n = interpolate_harmonic(mxx+.5,myy+.5,i_res,j_res, m_mu )
+
+
+				#plt.scatter(mxx,myy,c=m_eta)
+				#plt.colorbar()
+				#plt.show()
 				
 				if was_plastic:
-					so_xx, so_xy = so0_xx, so0_xy	
+					so_xx, so_xy = so0_xx.copy(), so0_xy.copy()
+
+				pl.plot_matrix(self.figname, T, Step*10, eta_s, eta_n, so_xx,so_xy)
 
 				#Check if we have nans
 				if np.isnan(eta_s).any(): fill_nans(eta_s)
@@ -231,16 +238,33 @@ class PGM:
 				kbond   = 4*eta_s.min()/((dx+dy)**2)
 				kcont   = 2*eta_s.min()/(dx+dy)
 
+				#print (dx,dy)
+
 				# find current moving points
 				Vx_, Vy_ = {},{}
+				angular_speed = 10 ** - 30
 				for point in self.moving_points:
 					py, px = point[2],point[3]	
 					pVx, pVy = point[0],point[1]
 					px_, py_ = round(px), round(py)	
-					Vx_["%i,%i" % (px_, py_)] = pVx * (dx+dy)/kcont
-					Vy_["%i,%i" % (px_, py_)] = pVy * (dx+dy)/kcont
+					#print (pVx, pVy)
+					#if pVx == -10.0: 
+					#	pVx = 0
+					#	cx,cy = px,py
+					#if pVy == 10.0: 
+					#	pVy = 0
+					#	pVx = 10**-10
+					#	#r = ((cx-px_)**2 - (cy-py_)**2)**0.5
+					#	#pVx = - r * angular_speed * np.sin (angular_speed * dt0)
+					#	#pVy =   r * angular_speed * np.cos (angular_speed * dt0)
+					#pVx *= 10**-20
+					#pVy *= 10**-20
+					
+					Vx_["%i,%i" % (px_, py_)] = pVx * kcont**2 /100
+					Vy_["%i,%i" % (px_, py_)] = pVy * kcont**2 /100
 
-				#pl.plot_matrix(self.figname, T, Step, eta_s, eta_n, so_xx,so_xy)
+				pl.plot_matrix(self.figname, T, Step, eta_s, eta_n, so_xx,so_xy)
+				print (eta_s.min(),eta_s.max())
 
 				Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy, 
 						eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell, 
@@ -254,9 +278,14 @@ class PGM:
 				Vy = Stokes_solve[2::3].reshape((i_res),(j_res))
 
 				P *= kcont
-				#Vx *= kcont / 100
-				#Vy *= kcont / 100
+				#Vx *= kcont# / 100
+				#Vy *= kcont# / 100
 
+				#for point in self.moving_points:
+				#	py, px = point[2],point[3]	
+				#	pVx, pVy = point[0],point[1]
+				#	px_, py_ = round(px), round(py)	
+				#	print ("%s, %s, %s, %s" % (pVx, pVy, Vx[px_,py_], Vy[px_,py_]))
 
 				Vx_max = np.abs(Vx).max()
 				Vy_max = np.abs(Vy).max()
@@ -288,8 +317,9 @@ class PGM:
 				s_xx = (1-xelvis_n[1:,1:])*2*eta_n0[1:,1:]*e_xx + xelvis_n[1:,1:]*so_xx0[1:,1:]
 				s_xy = (1-xelvis_s)*2*eta_s0*e_xy + xelvis_s*so_xy0
 				s_ii = (s_xx**2 + average(s_xy**2))**.5
-				so0_xx = s_xx
-				so0_xy = s_xy
+				so0_xx = s_xx.copy()
+				so0_xy = s_xy.copy()
+				print(so0_xx.min(),so0_xx.max())
 
 				#if not plastic_yield: break
 				#print("plastic iteration")
@@ -298,31 +328,31 @@ class PGM:
 				
 				###################################
 				#dm_so_xx = m_s_xx.copy()
-				#d_ve = .5
-				#dt_m_maxwell = m_eta/m_mu
-				#ds_xx = s_xx - so_xx[1:,1:]
-				#ds_xy = s_xy - so_xy
-				#m_so_xx, m_so_xy = m_s_xx.copy(), m_s_xy.copy()
-				#m_so_xy_nodes = interpolate2m(mxx,myy,so_xy)
-				#m_so_xx_nodes = interpolate2m(mxx-.5,myy-.5, so_xx[1:,1:])
-				#multiplier = np.exp((-d_ve*dt/dt_m_maxwell).astype(float))
-				#dm_s_xx_subgrid = (m_so_xx_nodes - m_so_xx) * (1-multiplier)
-				#dm_s_xy_subgrid = (m_so_xy_nodes - m_so_xy) * (1-multiplier)
-				#d_s_xy_subgrid, t_ = interpolate(mxx,myy,i_res,j_res, ( dm_s_xy_subgrid, m_s_xy))
-				#d_s_xx_subgrid, t_ = interpolate(mxx+.5,myy+.5,i_res,j_res, ( dm_s_xx_subgrid, m_s_xx))
-				#d_s_xx_remainig = ds_xx - d_s_xx_subgrid[1:,1:]
-				#d_s_xy_remainig = ds_xy - d_s_xy_subgrid
-				#dm_s_xy_remainig = interpolate2m(mxx,myy,d_s_xy_remainig)
-				#dm_s_xx_remainig = interpolate2m(mxx-.5,myy-.5,d_s_xx_remainig)
-				#m_s_xx_corrected =  m_so_xx + dm_s_xx_subgrid + dm_s_xx_remainig
-				#m_s_xy_corrected =  m_so_xy + dm_s_xy_subgrid + dm_s_xy_remainig
-				#m_s_xx = m_s_xx_corrected.copy()
-				#m_s_xy = m_s_xy_corrected.copy()
+				d_ve = .7
+				dt_m_maxwell = m_eta/m_mu
+				ds_xx = s_xx - so_xx[1:,1:]
+				ds_xy = s_xy - so_xy
+				m_so_xx, m_so_xy = m_s_xx.copy(), m_s_xy.copy()
+				m_so_xy_nodes = interpolate2m(mxx,myy,so_xy)
+				m_so_xx_nodes = interpolate2m(mxx-.5,myy-.5, so_xx[1:,1:])
+				multiplier = np.exp((-d_ve*dt/dt_m_maxwell).astype(float))
+				dm_s_xx_subgrid = (m_so_xx_nodes - m_so_xx) * (1-multiplier)
+				dm_s_xy_subgrid = (m_so_xy_nodes - m_so_xy) * (1-multiplier)
+				d_s_xy_subgrid, t_ = interpolate(mxx,myy,i_res,j_res, ( dm_s_xy_subgrid, m_s_xy))
+				d_s_xx_subgrid, t_ = interpolate(mxx+.5,myy+.5,i_res,j_res, ( dm_s_xx_subgrid, m_s_xx))
+				d_s_xx_remainig = ds_xx - d_s_xx_subgrid[1:,1:]
+				d_s_xy_remainig = ds_xy - d_s_xy_subgrid
+				dm_s_xy_remainig = interpolate2m(mxx,myy,d_s_xy_remainig)
+				dm_s_xx_remainig = interpolate2m(mxx-.5,myy-.5,d_s_xx_remainig)
+				m_s_xx_corrected =  m_so_xx + dm_s_xx_subgrid + dm_s_xx_remainig
+				m_s_xy_corrected =  m_so_xy + dm_s_xy_subgrid + dm_s_xy_remainig
+				m_s_xx = m_s_xx_corrected.copy()
+				m_s_xy = m_s_xy_corrected.copy()
 				#self.plot2(T, Step, mxx, myy, m_so_xx_nodes, m_so_xx, dm_s_xx_subgrid, d_s_xx_subgrid, d_s_xx_remainig, dm_s_xx_remainig, m_s_xx )
 				###################################
 
-				m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
-				m_s_xy = interpolate2m(mxx,myy,s_xy)
+				#m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
+				#m_s_xy = interpolate2m(mxx,myy,s_xy)
 				#ds_xx = s_xx - so_xx[1:,1:]
 				#ds_xy = s_xy - so_xy
 				#m_s_xx = m_s_xx + interpolate2m(mxx-.5,myy-.5,ds_xx)
@@ -386,12 +416,15 @@ class PGM:
 #			mp_xx += m_Vx_eff*dt/dx
 #			mp_yy += m_Vy_eff*dt/dy
 #
-#			for (i,point) in enumerate(self.moving_points):
-#				py, px = point[2],point[3]	
-#				pVx, pVy = point[0],point[1]
-#				self.moving_points[i][3] = mp_xx[i]
-#				self.moving_points[i][2] = mp_yy[i]
-#				print (pVx, m_Vx_eff[i])
+			for (i,point) in enumerate(self.moving_points):
+				py, px = point[2],point[3]	
+				px_, py_ = round(px), round(py)	
+				#pVx, pVy = point[0],point[1]
+				pVx, pVy = Vx[px_,py_], Vy[px_,py_]
+				self.moving_points[i][3] = px+pVy*dt/dx
+				self.moving_points[i][2] = py+pVx*dt/dy
+				#print (pVx, m_Vx_eff[i])
+				#print ("%s, %s, %s, %s" % (pVx, pVy, Vx[px_,py_], Vy[px_,py_]))
 
 			m_a = m_w * dt
 			m_s_xx_ = m_s_xx - m_s_xy * 2 * m_a
@@ -407,8 +440,8 @@ class PGM:
 			if Step % step: continue
 
 			m_s_ii = (m_s_xx**2 + m_s_xy**2)**.5
-			#self.plot(T, Step, eta_s, mxx, myy, m_cat, s_ii, P, Vx, Vy, e_xx, e_xy, s_xx, s_xy, xelvis_s, mu_n, mu_s, w ,m_Vx, m_Vy, m_P, m_s_xx, m_s_xy, m_s_ii, m_e_xx, m_e_xy, m_eta, xelvis_s, eta_s0)
-			pl.plot_small(self.figname, T, Step, self.i_res, self.j_res, self.ii, self.jj,self.moving_points,mxx, myy, m_cat, s_ii, P, Vx, Vy, e_xx, e_xy, plastic_mask, plastic_current_mask, X=eta_s)
+			#pl.plot(self.figname, T, Step, i_res, j_res, eta_s, mxx, myy, m_cat, s_ii, P, Vx, Vy, e_xx, e_xy, s_xx, s_xy, xelvis_s, mu_n, mu_s, w ,m_Vx, m_Vy, m_P, m_s_xx, m_s_xy, m_s_ii, m_e_xx, m_e_xy, m_eta, xelvis_s, eta_s0)
+			pl.plot_small(self.figname, T, Step, self.i_res, self.j_res, self.ii, self.jj,self.moving_points,mxx, myy, m_cat, s_ii, P, Vx, Vy, e_xx, e_xy, plastic_mask, plastic_current_mask)
 
 			#self.save(Step, mxx, myy, m_cat, m_mu, m_eta, m_rho, m_C, m_sinphi, m_s_xx, m_s_xy, m_e_xx, m_e_xy, m_P)
 
