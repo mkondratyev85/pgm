@@ -155,19 +155,20 @@ class PGM:
 
 		dt = 1e+10
 		dt0 = dt
-		plastic_iterations = 1
+		plastic_iterations = 10
 		plastic_mask = np.zeros(mxx.shape).astype("bool")
 		while T < maxT:
 			#dt = max(dt, dt_min)
 			dt = 1e+10
 			was_plastic = False
 			for i in range(plastic_iterations):
+				dt = 1e+10
 				if Myr(T) > 10: gy_0 = 0
 				print ("T:%s, dt:%s, dt0:%s" % (T,dt,dt0))
 
 				plastic_yield = False
 
-				m_xelvis = m_eta/(m_mu*dt + m_eta)
+				m_xelvis = m_eta/(m_mu*dt0 + m_eta)
 				m_s_xx_new = m_s_xx*m_xelvis + 2*m_eta*m_e_xx*(1-m_xelvis)
 				m_s_xy_new = m_s_xy*m_xelvis + 2*m_eta*m_e_xy*(1-m_xelvis)
 
@@ -177,7 +178,7 @@ class PGM:
 				m_s_ii_yield[mask] = 0
 
 				ym = m_s_ii_yield < m_s_ii_new # yielding mask
-				check_for_plastic = True
+				check_for_plastic = False
 				#print("step")
 				plastic_current_mask = np.zeros(mxx.shape).astype("bool")
 				if check_for_plastic and np.any(ym):
@@ -210,7 +211,7 @@ class PGM:
 				if was_plastic:
 					so_xx, so_xy = so0_xx.copy(), so0_xy.copy()
 
-				pl.plot_matrix(self.figname, T, Step*10, eta_s, eta_n, so_xx,so_xy)
+				#pl.plot_matrix(self.figname, T, Step*10, eta_s, eta_n, so_xx,so_xy)
 
 				#Check if we have nans
 				if np.isnan(eta_s).any(): fill_nans(eta_s)
@@ -263,8 +264,8 @@ class PGM:
 					Vx_["%i,%i" % (px_, py_)] = pVx * kcont**2 /100
 					Vy_["%i,%i" % (px_, py_)] = pVy * kcont**2 /100
 
-				pl.plot_matrix(self.figname, T, Step, eta_s, eta_n, so_xx,so_xy)
-				print (eta_s.min(),eta_s.max())
+				#pl.plot_matrix(self.figname, T, Step, eta_s, eta_n, so_xx,so_xy)
+				#print (eta_s.min(),eta_s.max())
 
 				Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy, 
 						eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell, 
@@ -328,31 +329,31 @@ class PGM:
 				
 				###################################
 				#dm_so_xx = m_s_xx.copy()
-				d_ve = .7
-				dt_m_maxwell = m_eta/m_mu
-				ds_xx = s_xx - so_xx[1:,1:]
-				ds_xy = s_xy - so_xy
-				m_so_xx, m_so_xy = m_s_xx.copy(), m_s_xy.copy()
-				m_so_xy_nodes = interpolate2m(mxx,myy,so_xy)
-				m_so_xx_nodes = interpolate2m(mxx-.5,myy-.5, so_xx[1:,1:])
-				multiplier = np.exp((-d_ve*dt/dt_m_maxwell).astype(float))
-				dm_s_xx_subgrid = (m_so_xx_nodes - m_so_xx) * (1-multiplier)
-				dm_s_xy_subgrid = (m_so_xy_nodes - m_so_xy) * (1-multiplier)
-				d_s_xy_subgrid, t_ = interpolate(mxx,myy,i_res,j_res, ( dm_s_xy_subgrid, m_s_xy))
-				d_s_xx_subgrid, t_ = interpolate(mxx+.5,myy+.5,i_res,j_res, ( dm_s_xx_subgrid, m_s_xx))
-				d_s_xx_remainig = ds_xx - d_s_xx_subgrid[1:,1:]
-				d_s_xy_remainig = ds_xy - d_s_xy_subgrid
-				dm_s_xy_remainig = interpolate2m(mxx,myy,d_s_xy_remainig)
-				dm_s_xx_remainig = interpolate2m(mxx-.5,myy-.5,d_s_xx_remainig)
-				m_s_xx_corrected =  m_so_xx + dm_s_xx_subgrid + dm_s_xx_remainig
-				m_s_xy_corrected =  m_so_xy + dm_s_xy_subgrid + dm_s_xy_remainig
-				m_s_xx = m_s_xx_corrected.copy()
-				m_s_xy = m_s_xy_corrected.copy()
+				#d_ve = .7
+				#dt_m_maxwell = m_eta/m_mu
+				#ds_xx = s_xx - so_xx[1:,1:]
+				#ds_xy = s_xy - so_xy
+				#m_so_xx, m_so_xy = m_s_xx.copy(), m_s_xy.copy()
+				#m_so_xy_nodes = interpolate2m(mxx,myy,so_xy)
+				#m_so_xx_nodes = interpolate2m(mxx-.5,myy-.5, so_xx[1:,1:])
+				#multiplier = np.exp((-d_ve*dt/dt_m_maxwell).astype(float))
+				#dm_s_xx_subgrid = (m_so_xx_nodes - m_so_xx) * (1-multiplier)
+				#dm_s_xy_subgrid = (m_so_xy_nodes - m_so_xy) * (1-multiplier)
+				#d_s_xy_subgrid, t_ = interpolate(mxx,myy,i_res,j_res, ( dm_s_xy_subgrid, m_s_xy))
+				#d_s_xx_subgrid, t_ = interpolate(mxx+.5,myy+.5,i_res,j_res, ( dm_s_xx_subgrid, m_s_xx))
+				#d_s_xx_remainig = ds_xx - d_s_xx_subgrid[1:,1:]
+				#d_s_xy_remainig = ds_xy - d_s_xy_subgrid
+				#dm_s_xy_remainig = interpolate2m(mxx,myy,d_s_xy_remainig)
+				#dm_s_xx_remainig = interpolate2m(mxx-.5,myy-.5,d_s_xx_remainig)
+				#m_s_xx_corrected =  m_so_xx + dm_s_xx_subgrid + dm_s_xx_remainig
+				#m_s_xy_corrected =  m_so_xy + dm_s_xy_subgrid + dm_s_xy_remainig
+				#m_s_xx = m_s_xx_corrected.copy()
+				#m_s_xy = m_s_xy_corrected.copy()
 				#self.plot2(T, Step, mxx, myy, m_so_xx_nodes, m_so_xx, dm_s_xx_subgrid, d_s_xx_subgrid, d_s_xx_remainig, dm_s_xx_remainig, m_s_xx )
 				###################################
 
-				#m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
-				#m_s_xy = interpolate2m(mxx,myy,s_xy)
+				m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
+				m_s_xy = interpolate2m(mxx,myy,s_xy)
 				#ds_xx = s_xx - so_xx[1:,1:]
 				#ds_xy = s_xy - so_xy
 				#m_s_xx = m_s_xx + interpolate2m(mxx-.5,myy-.5,ds_xx)
@@ -388,23 +389,23 @@ class PGM:
 			myyB = myy + .5*m_Vy*dt/dy
 			m_VxB = interpolate2m(mxxB   , myyB-.5, Vx[:-1,:])
 			m_VyB = interpolate2m(mxxB-.5, myyB   , Vy[:,:-1])
-			mxxC = mxx + .5*m_VxB*dt/dx
-			myyC = myy + .5*m_VyB*dt/dy
-			m_VxC = interpolate2m(mxxC   , myyC-.5, Vx[:-1,:])
-			m_VyC = interpolate2m(mxxC-.5, myyC   , Vy[:,:-1])
-			mxxD = mxx + m_VxC*dt/dx
-			myyD = myy + m_VyC*dt/dy
-			m_VxD = interpolate2m(mxxD   , myyD-.5, Vx[:-1,:])
-			m_VyD = interpolate2m(mxxD-.5, myyD   , Vy[:,:-1])
-			m_Vx_eff = 1/6*(m_Vx + 2*m_VxB + 2*m_VxC + m_VxD)
-			m_Vy_eff = 1/6*(m_Vy + 2*m_VyB + 2*m_VyC + m_VyD)
+			#mxxC = mxx + .5*m_VxB*dt/dx
+			#myyC = myy + .5*m_VyB*dt/dy
+			#m_VxC = interpolate2m(mxxC   , myyC-.5, Vx[:-1,:])
+			#m_VyC = interpolate2m(mxxC-.5, myyC   , Vy[:,:-1])
+			#mxxD = mxx + m_VxC*dt/dx
+			#myyD = myy + m_VyC*dt/dy
+			#m_VxD = interpolate2m(mxxD   , myyD-.5, Vx[:-1,:])
+			#m_VyD = interpolate2m(mxxD-.5, myyD   , Vy[:,:-1])
+			#m_Vx_eff = 1/6*(m_Vx + 2*m_VxB + 2*m_VxC + m_VxD)
+			#m_Vy_eff = 1/6*(m_Vy + 2*m_VyB + 2*m_VyC + m_VyD)
 
-			#mxx += m_VxB*dt/dx
-			#myy += m_VyB*dt/dy
+			mxx += m_VxB*dt/dx
+			myy += m_VyB*dt/dy
 			#mxx += m_Vx*dt/dx
 			#myy += m_Vy*dt/dy
-			mxx += m_Vx_eff*dt/dx
-			myy += m_Vy_eff*dt/dy
+			#mxx += m_Vx_eff*dt/dx
+			#myy += m_Vy_eff*dt/dy
 #
 #			mp_xx = np.array([point[3] for point in self.moving_points])
 #			mp_yy = np.array([point[2] for point in self.moving_points])
