@@ -1,4 +1,28 @@
 import numpy as np
+from scipy.interpolate import griddata, interp2d
+
+def fill_nans(m):
+    """ Fills missing values in 2D numpy array grid """
+
+    x = np.arange(0, m.shape[1])
+    y = np.arange(0, m.shape[0])
+    #mask invalid values
+    array = np.ma.masked_invalid(m)
+    xx, yy = np.meshgrid(x, y)
+    #get only the valid values
+    x1 = xx[~array.mask]
+    y1 = yy[~array.mask]
+    newarr = array[~array.mask]
+
+    f = interp2d(x1,y1,newarr,kind='linear')
+    znew = f(x,y)
+    return znew
+
+    GD1 = griddata((x1, y1), newarr.ravel(),
+                               (xx, yy),
+                               method='linear')
+    return GD1
+
 
 def interpolate2m(mxx, myy, B):
     """ Interpolate from grid to markers and return list of values (p.117 eq.8.19)

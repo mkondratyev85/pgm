@@ -5,12 +5,23 @@ import numpy as np
 from interpolate import (interpolate2m,
                          interpolate2m_vect,
                          interpolate,
-                         interpolate_harmonic)
+                         interpolate_harmonic,
+                         fill_nans)
 
 class TestInterpolation(unittest.TestCase):
 
     def setUp(self):
         pass
+
+    def test_fill_nan(self):
+        m = np.array([[np.nan, 1,      1, 1],
+                      [2,      2, np.nan, 2],
+                      [3,      3,      3, np.nan]])
+        m2 = fill_nans(m)
+        self.assertTrue(np.allclose(m2,
+                                       np.array([[1.,1.,1.,1.],
+                                                 [2.,2.,2.,2.],
+                                                 [3.,3.,3.,3.]])))
 
     def test_interplate(self):
 
