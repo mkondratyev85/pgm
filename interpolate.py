@@ -13,11 +13,14 @@ def interpolate2m(mxx, myy, B):
     mxx_int = mxx.astype(int)
     myy_int = myy.astype(int)
 
-    mxx[mxx<0] = 0
-    myy[myy<0] = 0
-
     mxx_res = mxx - mxx_int
     myy_res = myy - myy_int
+
+    mxx_res[mxx<0] = 0
+    myy_res[myy<0] = 0
+    mxx_int[mxx<0] = 0
+    myy_int[myy<0] = 0
+
     values = np.zeros(np.shape(mxx_int))
     for idx in range(len(mxx_int)):
         i = myy_int[idx]
@@ -34,45 +37,57 @@ def interpolate2m(mxx, myy, B):
             values[idx] = B[i,j]*(1-x)*(1-y) + B[i,j+1]*x*(1-y) + B[i+1,j]*(1-x)*y + B[i+1,j+1]*x*y
     return values
 
-def interpolate2m_vect(mxx,myy,B):
-	# Interpolation from grid to markers p.117 eq.8.19
-	i_res, j_res = B.shape
+def interpolate2m_vect(mxx, myy, B):
+    """ Interpolate from grid to markers and return list of values (p.117 eq.8.19)
 
-	mxx_int = mxx.astype(int)
-	myy_int = myy.astype(int)
-	mxx_res = mxx - mxx_int
-	myy_res = myy - myy_int
-	values = np.zeros(np.shape(mxx_int))
+    It is vectorised (faster) version of interpolate2m
+    mxx - numpy 1D array of x coordinates of markers
+    myy - numpy 1D array of y coordinates of markers
+    B - numpy 2D array
 
-	i = myy_int
-	j = mxx_int
-	x = mxx_res
-	y = myy_res
+    """
+    i_res, j_res = B.shape
 
-	msk_i = i>i_res-2 # mask for i>i_res-1
-	msk_j = j>j_res-2 # mask for j>i_res-1
-	msk_ij_ = np.logical_and(i>i_res-2, j>j_res-2)
-	msk_ij = np.logical_not(np.logical_and(i>i_res-2, j>j_res-2))
-	msk_nij = np.logical_not(np.logical_or(msk_i,msk_j))
-	msk_i = np.logical_and(msk_i,msk_ij)
-	msk_j = np.logical_and(msk_j,msk_ij)
+    mxx_int = mxx.astype(int)
+    myy_int = myy.astype(int)
+    mxx_res = mxx - mxx_int
+    myy_res = myy - myy_int
+    mxx_res[mxx<0] = 0
+    myy_res[myy<0] = 0
+    mxx_int[mxx<0] = 0
+    myy_int[myy<0] = 0
 
-	#values[idx] = B[i,j]
-	values[msk_ij_] = B[i[msk_ij_],j[msk_ij_]]
+    values = np.zeros(np.shape(mxx_int))
 
-	#values[idx] = (B[i,j]*(1-x) + B[i,j+1]*x)
-	values[msk_i] = (B[i[msk_i],j[msk_i]]*(1-x[msk_i]) + B[i[msk_i],j[msk_i]+1]*x[msk_i])
+    i = myy_int
+    j = mxx_int
+    x = mxx_res
+    y = myy_res
 
-	#values[idx] = (B[i,j]*(1-y) + B[i+1,j]*y)
-	values[msk_j] = (B[i[msk_j],j[msk_j]]*(1-y[msk_j]) + B[i[msk_j]+1,j[msk_j]]*y[msk_j])
+    msk_i = i>i_res-2 # mask for i>i_res-1
+    msk_j = j>j_res-2 # mask for j>i_res-1
+    msk_ij_ = np.logical_and(i>i_res-2, j>j_res-2)
+    msk_ij = np.logical_not(np.logical_and(i>i_res-2, j>j_res-2))
+    msk_nij = np.logical_not(np.logical_or(msk_i,msk_j))
+    msk_i = np.logical_and(msk_i,msk_ij)
+    msk_j = np.logical_and(msk_j,msk_ij)
 
-	#values         = B[i,j]*(1-x)*(1-y) + B[i,j+1]*x*(1-y) + B[i+1,j]*(1-x)*y + B[i+1,j+1]*x*y
-	values[msk_nij] = B[i[msk_nij],j[msk_nij]]*(1-x[msk_nij])*(1-y[msk_nij]) +\
-	                  B[i[msk_nij],j[msk_nij]+1]*x[msk_nij]*(1-y[msk_nij]) + \
-	                  B[i[msk_nij]+1,j[msk_nij]]*(1-x[msk_nij])*y[msk_nij] + \
-	                  B[i[msk_nij]+1,j[msk_nij]+1]*x[msk_nij]*y[msk_nij]
+    #values[idx] = B[i,j]
+    values[msk_ij_] = B[i[msk_ij_],j[msk_ij_]]
 
-	return values
+    #values[idx] = (B[i,j]*(1-x) + B[i,j+1]*x)
+    values[msk_i] = (B[i[msk_i],j[msk_i]]*(1-x[msk_i]) + B[i[msk_i],j[msk_i]+1]*x[msk_i])
+
+    #values[idx] = (B[i,j]*(1-y) + B[i+1,j]*y)
+    values[msk_j] = (B[i[msk_j],j[msk_j]]*(1-y[msk_j]) + B[i[msk_j]+1,j[msk_j]]*y[msk_j])
+
+    #values         = B[i,j]*(1-x)*(1-y) + B[i,j+1]*x*(1-y) + B[i+1,j]*(1-x)*y + B[i+1,j+1]*x*y
+    values[msk_nij] = B[i[msk_nij],j[msk_nij]]*(1-x[msk_nij])*(1-y[msk_nij]) +\
+                      B[i[msk_nij],j[msk_nij]+1]*x[msk_nij]*(1-y[msk_nij]) + \
+                      B[i[msk_nij]+1,j[msk_nij]]*(1-x[msk_nij])*y[msk_nij] + \
+                      B[i[msk_nij]+1,j[msk_nij]+1]*x[msk_nij]*y[msk_nij]
+
+    return values
 
 def interpolate(mxx,myy,i_res,j_res, datas):
 	# Bilineral interpolation (first-order accurate) p.116 eq.8.18
