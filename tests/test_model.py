@@ -1,12 +1,68 @@
 import unittest
+import matplotlib.pylab as plt
 import numpy as np
 
-from interpolate import interpolate2m, interpolate2m_vect
+from interpolate import interpolate2m, interpolate2m_vect, interpolate
 
-class TestMode(unittest.TestCase):
+class TestInterpolation(unittest.TestCase):
 
     def setUp(self):
         pass
+
+    def test_interplate(self):
+
+        # test simple interpolation onto grid nodes
+
+        mxx = np.array([0,1,0,1,0,1])#, .5, .5])
+        myy = np.array([0,0,1,1,2,2])#, .5,1.5])
+        v   = np.array([0,1,0,1,0,1])#, .5, .5])
+
+        result = interpolate(mxx, myy, 3, 2, (v,))[0]
+        self.assertTrue(np.array_equal(result,
+                                       np.array([[0,1],
+                                                 [0,1],
+                                                 [0,1]])))
+
+
+        # test interpolation iside grid cells
+
+        mxx = np.array([0.25, 0.25, 0.25, 0.75, 0.75, 0.75])
+        myy = np.array([0.25, 1,    1.75, 0.25, 1,    1.75])
+        v   = np.array([0,   1,     2,    1,    2,    3])
+        result = interpolate(mxx, myy, 3, 2, (v,))[0]
+        self.assertTrue(np.array_equal(result,
+                                       np.array([[0,1],
+                                                 [1,2],
+                                                 [2,3]])))
+
+        mxx = np.array([ 0.25, 0.75, 0.25, 0.75,-0.25,1.25])
+        myy = np.array([-0.25,-0.25, 2.25, 2.25,1, 1])
+        v   = np.array([ 0,   1, 2, 3, 4, 5])
+        result = interpolate(mxx, myy, 3, 2, (v,))[0]
+        self.assertTrue(np.array_equal(result,
+                                       np.array([[0.,1.],
+                                                 [4.,5.],
+                                                 [2.,3.]])))
+
+        # test complicated interpolation
+        np.random.seed(2)
+        i_res, j_res = 3,5
+        mxx = np.random.uniform(0, j_res, 1500)-.5
+        myy = np.random.uniform(0, i_res, 1500)-.5
+        v = mxx + myy
+        result = interpolate(mxx, myy, i_res, j_res, (v,))[0]
+
+        result_int = np.array([[0,1,2,3,4],
+                               [1,2,3,4,5],
+                               [2,3,4,5,6]])
+        diff = result - result_int
+        self.assertTrue((diff<0.09).all(),
+                        ' Interpolated gird should differ from ideal less then 0.09' )
+
+        #plt.imshow(result, interpolation="none")
+        #plt.scatter(mxx, myy, s=25, c=v, edgecolors='black')
+        #plt.show()
+        ##print (result)
 
     def test_interpolate2m_vect(self):
         array = np.array([[0, 1, 1.5, 2],

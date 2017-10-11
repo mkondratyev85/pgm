@@ -90,24 +90,32 @@ def interpolate2m_vect(mxx, myy, B):
     return values
 
 def interpolate(mxx,myy,i_res,j_res, datas):
-	# Bilineral interpolation (first-order accurate) p.116 eq.8.18
-	mxx_round = np.round(mxx).astype(int)
-	myy_round = np.round(myy).astype(int)
-	mxx_res = np.abs(mxx - mxx_round)
-	myy_res = np.abs(myy - myy_round)
-	wm = (1 - mxx_res)*(1-myy_res)
+    """ Interpolate from markers to gird using bilineral interpolation
 
-	down = np.zeros((i_res,j_res))
-	values = []
-	for i in range(len(datas)):
-		values.append(np.zeros((i_res,j_res)))
-	
-	np.add.at(down,(myy_round,mxx_round),wm)
+    1st order accuray scheme from p.116 eq.8.18
+    mxx - numpy 1D array of x coordinates of markers
+    myy - numpy 1D array of y coordinates of markers
+    i_res - x resolutin of a gird
+    j_res - y resolutin of a gird
+    datas - numpy 1D array of marker values
+    """
+    mxx_round = np.round(mxx).astype(int)
+    myy_round = np.round(myy).astype(int)
+    mxx_res = np.abs(mxx - mxx_round)
+    myy_res = np.abs(myy - myy_round)
+    wm = (1 - mxx_res)*(1-myy_res)
 
-	for i in range(len(values)):
-		np.add.at(values[i],(myy_round,mxx_round),wm*datas[i])
-		values[i] = values[i]/down
-	return values
+    down = np.zeros((i_res,j_res))
+    values = []
+    for i in range(len(datas)):
+        values.append(np.zeros((i_res,j_res)))
+
+    np.add.at(down,(myy_round,mxx_round),wm)
+
+    for i in range(len(values)):
+        np.add.at(values[i],(myy_round,mxx_round),wm*datas[i])
+        values[i] = values[i]/down
+    return values
 
 def interpolate_harmonic(mxx,myy,i_res,j_res,data):
 	# Bilineral harmonic interpolation (first-order accurate) p.184 eq.13.10
