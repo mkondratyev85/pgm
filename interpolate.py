@@ -1,29 +1,38 @@
 import numpy as np
 
-def interpolate2m(mxx,myy,B):
-	# Interpolation from grid to markers p.117 eq.8.19
-	i_res, j_res = B.shape
+def interpolate2m(mxx, myy, B):
+    """ Interpolate from grid to markers and return list of values (p.117 eq.8.19)
 
-	mxx_int = mxx.astype(int)
-	myy_int = myy.astype(int)
+    mxx - numpy 1D array of x coordinates of markers
+    myy - numpy 1D array of y coordinates of markers
+    B - numpy 2D array
 
-	mxx_res = mxx - mxx_int
-	myy_res = myy - myy_int
-	values = np.zeros(np.shape(mxx_int))
-	for idx in range(len(mxx_int)):
-		i = myy_int[idx]
-		j = mxx_int[idx]
-		x = mxx_res[idx]
-		y = myy_res[idx]
-		if (i > i_res-2) and (j > j_res-2):
-			values[idx] = B[i,j]
-		elif i > i_res-2:
-			values[idx] = (B[i,j]*(1-x) + B[i,j+1]*x)*2
-		elif j > j_res-2: 
-			values[idx] = (B[i,j]*(1-y) + B[i+1,j]*y)*2
-		else:
-			values[idx] = B[i,j]*(1-x)*(1-y) + B[i,j+1]*x*(1-y) + B[i+1,j]*(1-x)*y + B[i+1,j+1]*x*y
-	return values
+    """
+    i_res, j_res = B.shape
+
+    mxx_int = mxx.astype(int)
+    myy_int = myy.astype(int)
+
+    mxx[mxx<0] = 0
+    myy[myy<0] = 0
+
+    mxx_res = mxx - mxx_int
+    myy_res = myy - myy_int
+    values = np.zeros(np.shape(mxx_int))
+    for idx in range(len(mxx_int)):
+        i = myy_int[idx]
+        j = mxx_int[idx]
+        x = mxx_res[idx]
+        y = myy_res[idx]
+        if (i > i_res-2) and (j > j_res-2):
+            values[idx] = B[i,j]
+        elif i > i_res-2:
+            values[idx] = B[i,j]*(1-x) + B[i,j+1]*x
+        elif j > j_res-2:
+            values[idx] = B[i,j]*(1-y) + B[i+1,j]*y
+        else:
+            values[idx] = B[i,j]*(1-x)*(1-y) + B[i,j+1]*x*(1-y) + B[i+1,j]*(1-x)*y + B[i+1,j+1]*x*y
+    return values
 
 def interpolate2m_vect(mxx,myy,B):
 	# Interpolation from grid to markers p.117 eq.8.19
