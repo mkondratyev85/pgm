@@ -21,5 +21,19 @@ model_prop = load_model(i_res, j_res, pdensity)
 #gy_0 = 0
 
 figname = '/tmp/t7/'
-model = PGM( width, height, j_res, i_res, gx_0, gy_0, model_prop, figname = figname)
-model.run(sec(1000000000000), 10, figname)
+control = PGM( width, height, j_res, i_res, gx_0, gy_0, model_prop, figname = figname)
+
+parameters = {'width' : width,
+              'height' : height,
+              'j_res' : j_res,
+              'i_res' : i_res,
+              'gx_0' : gx_0,
+              'gy_0' : gy_0,
+              'p0cell' : 0,
+}
+parameters.update(model_prop)
+
+control.init_(parameters)
+control.make_step_(MaxT=sec(10000000000))
+
+#control.run(sec(1000000000000), 10, figname)

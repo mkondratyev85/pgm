@@ -7,6 +7,7 @@ from Stokeselvis import return_sparse_matrix_Stokes
 from interpolate import interpolate, interpolate2m, interpolate_harmonic, fill_nans
 
 from view import Matplot
+from model import Model
 
 average = lambda x: (x[:-1,:-1] + x[1:,:-1] +x[1:,1:] +x[:-1,1:])/4.0
 
@@ -103,10 +104,18 @@ class PGM:
                             git = self.label,
                             figname = self.figname )
 
+    def init_(self, parameters):
+        self.model = Model(parameters)
+
+    def make_step_(self, MaxT = None):
+        parameters = self.model.make_step(maxT = MaxT)
+        self.view.plot12(parameters)
+
+
     def run(self, maxT, step, filename, dt_min=1e+10):
             self.figname = filename
-            mxx = self.mxx 
-            myy = self.myy 
+            mxx = self.mxx
+            myy = self.myy
             m_cat = self.m_cat
             m_rho = self.m_rho
             m_eta = self.m_eta
