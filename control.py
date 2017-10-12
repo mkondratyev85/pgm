@@ -4,14 +4,9 @@ from scipy import sparse
 import subprocess
 
 from Stokeselvis import return_sparse_matrix_Stokes
-from interpolate import interpolate, interpolate2m, interpolate_harmonic
+from interpolate import interpolate, interpolate2m, interpolate_harmonic, fill_nans
 
 average = lambda x: (x[:-1,:-1] + x[1:,:-1] +x[1:,1:] +x[:-1,1:])/4.0
-
-def fill_nans(m):
-	print("Nan detected! Filling it using interpolation")
-	mask = np.isnan(m)
-	m[mask] = np.interp(np.flatnonzero(mask),np.flatnonzero(~mask),m[~mask])
 
 def load_step(filename, Step):
 	data = np.load("%s/%s.npz" % (filename, Step))
