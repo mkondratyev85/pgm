@@ -79,7 +79,7 @@ class Model(object):
 
         m_s_ii_old = np.zeros(np.shape(mxx))
         m_e_ii_old = np.zeros(np.shape(mxx))
-        
+
         i_res, j_res = self.i_res, self.j_res
         dx, dy = self.dx, self.dy
         gx_0, gy_0 = self.gx_0, self.gy_0
@@ -159,8 +159,8 @@ class Model(object):
                         so_xy = so_xy*xelvis_s
                         so_xx = so_xx*xelvis_n
 
-                        Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy, 
-                                        eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell, 
+                        Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy,
+                                        eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell,
                                         lower_boundary=self.bottom_bound, upper_boundary=self.top_bound,
                                         right_boundary=self.right_bound, left_boundary=self.left_bound)
 
@@ -173,8 +173,8 @@ class Model(object):
 
                         Vx_max = np.abs(Vx).max()
                         Vy_max = np.abs(Vy).max()
-                        dtx = 0.1 * dx / Vx_max 
-                        dty = 0.1 * dy / Vy_max 
+                        dtx = 0.1 * dx / Vx_max
+                        dty = 0.1 * dy / Vy_max
                         dt = min(dtx,dty)
 
                         #dVx, dVy   = Vx[1:,  :-1] - Vx[:-1, :-1], Vy[ :-1, 1:] - Vy[:-1, :-1]
@@ -227,7 +227,7 @@ class Model(object):
                 m_e_xy = interpolate2m(mxx,myy,e_xy)
 
                 m_w    = interpolate2m(mxx-.5 ,myy-.5 , w)
-                
+
                 m_a = m_w * dt
                 m_s_xx_ = m_s_xx - m_s_xy * 2 * m_a
                 m_s_xy_ = m_s_xy + m_s_xy * 2 * m_a

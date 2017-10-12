@@ -1,4 +1,4 @@
-from control import PGM, load_step
+from control import PGM
 #from test_mmodel import load_model
 #from t import load_model
 from benchmark2 import load_model
