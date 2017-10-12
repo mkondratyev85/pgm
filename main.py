@@ -20,5 +20,6 @@ model_prop = load_model(i_res, j_res, pdensity)
 #width, height, j_res, i_res, gx_0, gy_0, right_bound, left_bound, top_bound, bottom_bound, model_prop = load_step("/home/fatune/t6",35)
 #gy_0 = 0
 
-model = PGM( width, height, j_res, i_res, gx_0, gy_0, model_prop)
-model.run(sec(1000000000000), 10, "/tmp/t7/")
+figname = '/tmp/t7/'
+model = PGM( width, height, j_res, i_res, gx_0, gy_0, model_prop, figname = figname)
+model.run(sec(1000000000000), 10, figname)

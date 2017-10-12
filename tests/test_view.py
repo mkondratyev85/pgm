@@ -10,12 +10,12 @@ class TestInterpolation(unittest.TestCase):
         pass
 
     def test_get_and_set_parameters(self):
-        view = Matplot()
-        self.assertTrue(view.dx is None)
+        self.assertRaises(ValueError, Matplot) # should raises if not all parameters given
+
+        view = Matplot(width = 10, height = 10, git = 'git', i_res=4, j_res=5, dx=4, dy=4, figname='/tmp/' )
 
         self.assertRaises(KeyError, Matplot, D=1)
 
-        self.assertEqual(view.dx, None)
         view.dx=2
         self.assertEqual(view.dx, 2)
 
