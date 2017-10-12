@@ -19,9 +19,9 @@ class TestInterpolation(unittest.TestCase):
                       [3,      3,      3, np.nan]])
         m2 = fill_nans(m)
         self.assertTrue(np.allclose(m2,
-                                       np.array([[1.,1.,1.,1.],
-                                                 [2.,2.,2.,2.],
-                                                 [3.,3.,3.,3.]])))
+                                    np.array([[1.,1.,1.,1.],
+                                              [2.,2.,2.,2.],
+                                              [3.,3.,3.,3.]])))
 
     def test_interplate(self):
 

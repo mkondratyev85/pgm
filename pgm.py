@@ -1,9 +1,10 @@
 import numpy as np
 import matplotlib.pylab as plt
 from scipy import sparse
+import subprocess
+
 from Stokeselvis import return_sparse_matrix_Stokes
 from interpolate import interpolate, interpolate2m, interpolate_harmonic
-import subprocess
 
 average = lambda x: (x[:-1,:-1] + x[1:,:-1] +x[1:,1:] +x[:-1,1:])/4.0
 
