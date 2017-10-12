@@ -273,5 +273,5 @@ class Model(object):
                               'mu_s' : mu_s,
                               'w' : w
                              }
-                return parameters
+                yield parameters
 

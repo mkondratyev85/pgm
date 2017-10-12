@@ -107,9 +107,12 @@ class PGM:
     def init_(self, parameters):
         self.model = Model(parameters)
 
-    def make_step_(self, MaxT = None):
-        parameters = self.model.make_step(maxT = MaxT)
-        self.view.plot12(parameters)
+    def run_(self, MaxT = None):
+
+        while True:
+            steps = self.model.make_step(maxT = MaxT)
+            for step in steps:
+                self.view.plot12(step)
 
 
     def run(self, maxT, step, filename, dt_min=1e+10):

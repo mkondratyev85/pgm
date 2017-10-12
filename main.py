@@ -34,6 +34,6 @@ parameters = {'width' : width,
 parameters.update(model_prop)
 
 control.init_(parameters)
-control.make_step_(MaxT=sec(10000000000))
+control.run_(MaxT=sec(10000000000))
 
 #control.run(sec(1000000000000), 10, figname)
