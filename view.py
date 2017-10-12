@@ -56,10 +56,26 @@ class Matplot(object):
 
         plt.subplot(3,4,11)
         self._plot_P(parameters)
+
+        plt.subplot(3,4,12)
+        self._plot_particals(parameters)
+
+
         plt.savefig('%s/%003d-%12.8f.png' % (self.figname,
                                              parameters['step'],
                                              parameters['T']))
         plt.close(fig)
+
+    def _plot_particals(self, parameters, title = None):
+        mxx, myy = parameters['mxx'], parameters['myy']
+        m_cat = parameters['m_cat']
+
+        if title:
+            plt.title(title)
+        plt.scatter(mxx,myy,c=m_cat,s=1,edgecolors='face',cmap='copper')
+        plt.colorbar()
+        plt.ylim([self.i_res-1,0])
+        plt.xlim([0,self.j_res-1])
 
 
     def _plot_sigma(self, parameters, title = None):

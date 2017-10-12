@@ -315,7 +315,6 @@ class PGM:
 
                     if Step % step : continue
 
-                    #self.plot(T, Step, eta_s, mxx, myy, m_cat, s_ii, P, Vx, Vy, e_xx, e_xy, s_xx, s_xy, xelvis_s, mu_n, mu_s, w )
                     parameters = {'T' : T,
                                   'step' : Step,
                                   'eta_s' : eta_s,
@@ -340,85 +339,7 @@ class PGM:
                     self.view.plot12(parameters)
                     self.save(Step, mxx, myy, m_cat, m_mu, m_eta, m_rho, m_C, m_sinphi, m_s_xx, m_s_xy, m_e_xx, m_e_xy, m_P)
 
-    def plot(self,T, Step, eta_n, mxx, myy, m_cat, sii, P, Vx, Vy, e_xx, e_xy, s_xx, s_xy, xelvis, mu_n, mu_s, w):
-        Myr = lambda t: t/(365.25*24*3600*10**6) # Convert seconds to millions of year
 
-        plt.clf()
-        fig = plt.figure(figsize=(30,20))
-
-        plt.suptitle("Model size: %s km x %s km (%s x %s cells, dx=%s km, dy=%s km). Current Time: %07.3f Myr. Step %s git verstion: %s" %
-                                (self.width/1000, self.height/1000, self.j_res, self.i_res, self.dx/1000, self.dy/1000, Myr(T), Step, self.label))
-        plt.subplot(3,4,1)
-        plt.title("Viscosity")
-        plt.imshow(eta_n,interpolation='none',cmap='copper')
-        plt.colorbar()
-        
-        plt.subplot(3,4,2)
-        plt.scatter(mxx,myy,c=m_cat,s=1,edgecolors='face',cmap='copper')
-        plt.colorbar()
-        plt.ylim([self.i_res-1,0])
-        plt.xlim([0,self.j_res-1])
-
-        plt.subplot(3,4,5)
-        plt.title("Vx")
-        plt.imshow(Vx,interpolation='none')
-        plt.colorbar()
-
-        plt.subplot(3,4,6)
-        plt.title("Vy")
-        plt.imshow(Vy,interpolation='none')
-        plt.colorbar()
-
-        plt.subplot(3,4,7)
-        plt.title("e_xx")
-        plt.imshow(e_xx,interpolation='none')
-        plt.colorbar()
-
-        plt.subplot(3,4,8)
-        plt.title("e_xy")
-        plt.imshow(e_xy,interpolation='none')
-        plt.colorbar()
-
-        plt.subplot(3,4,9)
-        plt.title("s_xx")
-        plt.imshow(s_xx,interpolation='none')
-        plt.colorbar()
-
-        plt.subplot(3,4,10)
-        plt.title("s_xy")
-        plt.imshow(s_xy,interpolation='none')
-        plt.colorbar()
-
-        plt.subplot(3,4,11)
-        plt.title("mu_n")
-        plt.imshow(mu_n,interpolation='none')
-        plt.colorbar()
-
-        plt.subplot(3,4,12)
-        plt.title("w")
-        plt.imshow(w,interpolation='none')
-        plt.colorbar()
-
-        
-        plt.subplot(3,4,3)
-        plt.title("Sigma II")
-        plt.imshow(sii[:-1,:-1],interpolation='none')
-        plt.colorbar()
-
-        Vx_average = 0.5*(Vx[1:-1,:-2]+Vx[:-2,:-2])
-        Vy_average = 0.5*(Vy[ :-2,1:-1]+Vy[:-2,:-2])
-        plt.subplot(3,4,4)
-        plt.title("P")
-        plt.imshow(P[1:,1:],interpolation='none')
-        plt.colorbar()
-        plt.streamplot(self.jj[:-2,:-2],self.ii[:-2,:-2],Vx_average,Vy_average,color='white')
-        plt.ylim([self.i_res-2,0])
-        plt.xlim([0,self.j_res-2])
-
-        plt.savefig('%s/%003d-%12.8f.png' % (self.figname, Step, Myr(T)))
-        plt.close(fig)
-
-    
     def save(self, Step, mxx, myy, m_cat, m_mu, m_eta, m_rho, m_C, m_sinphi, m_s_xx, m_s_xy, m_e_xx, m_e_xy, m_P):
         Myr = lambda t: t/(365.25*24*3600*10**6) # Convert seconds to millions of year
         np.savez("%s/%s.npz" % (self.figname, Step), mxx, myy, m_cat, m_mu, m_eta, m_rho, m_C, m_sinphi, m_s_xx, m_s_xy, m_e_xx, m_e_xy, m_P)
