@@ -1,2 +1,6 @@
 *.pyc
 *.swp
+*~
+*.npy
+*.points
+*.npz
