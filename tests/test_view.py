@@ -48,11 +48,9 @@ class TestInterpolation(unittest.TestCase):
              'w' : array,
              'sii' : array,
              'P' : array,
+             'mxx' : np.array([1,2]),
+             'myy' : np.array([3,4]),
+             'm_cat' : np.array([1,2]),
 
             }
         view.plot12(parameters=p)
-
-
-
-
-
