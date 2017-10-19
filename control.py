@@ -18,12 +18,12 @@ class PGM:
 
         self.gx_0, self.gy_0 = gx_0, gy_0
         self.p0cell  =  p0cell # Pressure condition in one cell (i==1 && j==2)
-        
+
         # define grid for messing with indexes
         self.j      = np.linspace(0,j_res-1,j_res).astype('int')
         self.i      = np.linspace(0,i_res-1,i_res).astype('int')
         self.jj,self.ii  = np.meshgrid(self.j,self.i)
-        
+
         self.mxx = model_prop["mxx"]
         self.myy = model_prop["myy"]
         self.m_cat = model_prop["m_cat"]
@@ -63,9 +63,6 @@ class PGM:
         self.model = Model(parameters)
 
     def run_(self, MaxT = None):
-
         while True:
             for step in self.model.make_step(maxT = MaxT):
                 self.view.plot12(step)
-
-

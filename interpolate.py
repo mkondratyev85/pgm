@@ -14,14 +14,10 @@ def fill_nans(m):
     y1 = yy[~array.mask]
     newarr = array[~array.mask]
 
-    f = interp2d(x1,y1,newarr,kind='linear')
-    znew = f(x,y)
+    with np.errstate(all = 'ignore'):
+        f = interp2d(x1,y1,newarr,kind='linear')
+        znew = f(x,y)
     return znew
-
-    GD1 = griddata((x1, y1), newarr.ravel(),
-                               (xx, yy),
-                               method='linear')
-    return GD1
 
 
 def interpolate2m(mxx, myy, B):
@@ -167,4 +163,3 @@ def interpolate_harmonic(mxx,myy,i_res,j_res,data):
 
     values = down/values
     return values
-

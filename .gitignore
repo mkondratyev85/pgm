@@ -4,3 +4,4 @@
 *.npy
 *.points
 *.npz
+__pycache__/

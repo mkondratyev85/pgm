@@ -34,6 +34,7 @@ class Matplot(object):
         """ Make 12 plots on a list """
         plt.clf()
         fig = plt.figure(figsize = self.figsize)
+        print(fig.get_size_inches())
 
         subtitle = f'Model size: {self.width/1000} km x {self.height/1000} ' +\
                    f'{self.j_res} x {self.i_res}, dx={self.dx}m, dy={self.dy}m.' +\
@@ -70,9 +71,11 @@ class Matplot(object):
         mxx, myy = parameters['mxx'], parameters['myy']
         m_cat = parameters['m_cat']
 
+        print(min(self.figsize))
+        size = min(self.figsize)/m_cat.size*5000
         if title:
             plt.title(title)
-        plt.scatter(mxx,myy,c=m_cat,s=1,edgecolors='face',cmap='copper')
+        plt.scatter(mxx,myy,c=m_cat,s=size,edgecolors='face',cmap='Blues')
         plt.colorbar()
         plt.ylim([self.i_res-1,0])
         plt.xlim([0,self.j_res-1])
@@ -83,7 +86,7 @@ class Matplot(object):
             title = 'Sigma ii'
         plt.title(title)
         sii= parameters['sii']
-        plt.imshow(sii[:-1,:-1],interpolation='none')
+        plt.imshow(sii[:-1,:-1],interpolation='none',cmap='Reds')
         plt.colorbar()
 
     def _plot_P(self, parameters):
@@ -94,23 +97,23 @@ class Matplot(object):
         Vx_average = 0.5*(Vy[ :-2,1:-1]+Vy[:-2,:-2])
 
         plt.title("P")
-        plt.imshow(P[1:,1:],interpolation='none')
+        plt.imshow(P[1:,1:],interpolation='none',cmap='seismic')
         plt.colorbar()
-        plt.streamplot(self.jj[:-2,:-2]+.5,self.ii[:-2,:-2]+.5,Vy_average,Vx_average,color='white')
+        plt.streamplot(self.jj[:-2,:-2]+.5,self.ii[:-2,:-2]+.5,Vy_average,Vx_average,color='black')
         plt.ylim([self.i_res-2,0])
         plt.xlim([0,self.j_res-2])
 
 
-    def _plot_simple_w_colorbar(self, parameter, array, title=None):
+    def _plot_simple_w_colorbar(self, parameter, array, title=None, cmap='seismic'):
         if not title:
             title=array
         plt.title(title)
         plt.imshow(parameter[array],
-                   interpolation='none')
+                   interpolation='none',
+                   cmap=cmap)
         plt.colorbar()
 
     def _plot_visocity(self, parameters ):
         plt.title("Viscosity")
-        plt.imshow(parameters['eta_n'],interpolation='none',cmap='copper')
+        plt.imshow(parameters['eta_n'],interpolation='none',cmap='coolwarm')
         plt.colorbar()
-
