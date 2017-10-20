@@ -30,6 +30,19 @@ class Matplot(object):
         i = np.linspace(0,self.i_res-1,self.i_res).astype('int')
         self.jj,self.ii  = np.meshgrid(j,i)
 
+        slice_n = lambda array: array[1:,1:]
+        slice_v = lambda array: array[:-1,:-1]
+        self.slices = { 'eta_n' :  slice_n,
+                        'mu_n' : slice_n,
+                        'Vx' : slice_v,
+                        'Vy' : slice_v,
+                        'e_xx' : slice_v,
+                        'e_xy' : slice_v,
+                        's_xx' : slice_v,
+                        's_xy' : slice_v,
+                        'default' : lambda array: array,
+                        }
+
     def plot12(self, parameters):
         """ Make 12 plots on a list """
         plt.clf()
@@ -104,7 +117,12 @@ class Matplot(object):
         if not title:
             title=array
         plt.title(title, fontsize=fontsize)
-        plt.imshow(parameter[array],
+        A = parameter[array]
+        try:
+            slicer = self.slices[array]
+        except KeyError:
+            slicer = self.slices['default']
+        plt.imshow(slicer(A),
                    interpolation='none',
                    cmap=cmap)
         plt.colorbar()
