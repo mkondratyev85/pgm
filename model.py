@@ -137,6 +137,8 @@ class Model(object):
                         eta_n, so_xx = interpolate(mxx+.5,myy+.5,i_res,j_res, (m_eta, m_s_xx))
                         mu_s = interpolate_harmonic(mxx,myy,i_res,j_res, m_mu )
                         mu_n = interpolate_harmonic(mxx+.5,myy+.5,i_res,j_res, m_mu )
+                        eta_n = interpolate_harmonic(mxx+.5,myy+.5,i_res,j_res, m_eta )
+                        eta_s = interpolate_harmonic(mxx,myy,i_res,j_res, m_eta )
 
                         #Check if we have nans
                         if np.isnan(eta_s).any(): fill_nans(eta_s)
@@ -184,7 +186,7 @@ class Model(object):
 
                         #dVx_dy = (Vx[:-1,1:] - Vx[:-1,:-1])/dy
                         #dVy_dx = (Vy[1:,:-1] - Vy[:-1,:-1])/dx
-                        
+
                         dVx_dy = (Vx[1:-1,:] - Vx[:-2,:])/dy
                         dVy_dx = (Vy[:,1:-1] - Vy[:,:-2])/dx
 
@@ -211,7 +213,7 @@ class Model(object):
 
                 m_Vx = interpolate2m(mxx   , myy-.5, Vx[:-1,:])
                 m_Vy = interpolate2m(mxx-.5, myy   , Vy[:,:-1])
-                m_P  = interpolate2m(mxx-.5, myy-.5, P[1:,1:]) # tecnichaly, there must be +.5,+.5 
+                m_P  = interpolate2m(mxx-.5, myy-.5, P[1:,1:]) # tecnichaly, there must be +.5,+.5
                                                                # but since we slice P, indexing goes one item lower
 
                 w = dVy_dx - dVx_dy
@@ -274,4 +276,3 @@ class Model(object):
                               'w' : w
                              }
                 yield parameters
-

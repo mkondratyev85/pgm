@@ -64,5 +64,8 @@ class PGM:
 
     def run_(self, MaxT = None):
         while True:
-            for step in self.model.make_step(maxT = MaxT):
-                self.view.plot12(step)
+            for iteration in self.model.make_step(maxT = MaxT):
+                print(iteration['step'])
+                if iteration['step'] % 10:
+                    continue
+                self.view.plot12(iteration)

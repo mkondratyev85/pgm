@@ -6,8 +6,8 @@ sec = lambda t: t * 365.25 * 24 * 3600 * 10**6 # Converts Myrs back to seconds
 
 width  = 1000 * 1000 # width of a model in meters
 height = 1000 * 1000 # height of a model in meters
-j_res  =  71 # width resolution
-i_res  =  73 # height resolution
+j_res  =  41 # width resolution
+i_res  =  43 # height resolution
 gx_0 = 0 # horizontal gravity field in m/s2
 gy_0 = 10 # vertical gravity field in m/s2
 
