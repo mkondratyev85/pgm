@@ -41,16 +41,14 @@ class Matplot(object):
                    f'Current Time: {parameters["T"]}, Step: {parameters["step"]} ' +\
                    f'git: {self.git}'
 
-        plt.suptitle(subtitle)
+        plt.suptitle(subtitle, fontsize=25)
 
-        plt.subplot(3,4,1)
-        self._plot_visocity(parameters)
-
-        things_to_plot = ['Vx', 'Vy', 'e_xx', 'e_xy', 's_xx', 's_xy', 'mu_n', 'w' ]
-        for i,array in enumerate(things_to_plot):
-            i+=2
+        things_to_plot = ['eta_n', 'Vx', 'Vy', 'e_xx', 'e_xy', 's_xx', 's_xy', 'mu_n', 'w' ]
+        titles =         [r'$\eta_n$', r'$V_x$', r'$V_y$', r'$e_{xx}$', r'$e_{xy}$', r'$\sigma_{xx}$', r'$\sigma_{xy}$', r'$\mu_{n}$', r'$\omega$' ]
+        for i,(array, title) in enumerate(zip(things_to_plot, titles)):
+            i+=1
             plt.subplot(3,4,i)
-            self._plot_simple_w_colorbar(parameters, array)
+            self._plot_simple_w_colorbar(parameters, array, title=title)
 
         plt.subplot(3,4,10)
         self._plot_sigma(parameters)
@@ -74,29 +72,27 @@ class Matplot(object):
         print(min(self.figsize))
         size = min(self.figsize)/m_cat.size*5000
         if title:
-            plt.title(title)
+            plt.title(title, fontsize=15)
         plt.scatter(mxx,myy,c=m_cat,s=size,edgecolors='face',cmap='Blues')
         plt.colorbar()
         plt.ylim([self.i_res-1,0])
         plt.xlim([0,self.j_res-1])
 
 
-    def _plot_sigma(self, parameters, title = None):
-        if not title:
-            title = 'Sigma ii'
-        plt.title(title)
+    def _plot_sigma(self, parameters, title = r"$\sigma_{ii}$", fontsize=30):
+        plt.title(title, fontsize=fontsize)
         sii= parameters['sii']
         plt.imshow(sii[:-1,:-1],interpolation='none',cmap='Reds')
         plt.colorbar()
 
-    def _plot_P(self, parameters):
+    def _plot_P(self, parameters, fontsize=30):
         Vx, Vy = parameters['Vx'], parameters['Vy']
         P = parameters['P']
 
         Vy_average = 0.5*(Vx[1:-1,:-2]+Vx[:-2,:-2])
         Vx_average = 0.5*(Vy[ :-2,1:-1]+Vy[:-2,:-2])
 
-        plt.title("P")
+        plt.title(r"$P$", fontsize=fontsize)
         plt.imshow(P[1:,1:],interpolation='none',cmap='seismic')
         plt.colorbar()
         plt.streamplot(self.jj[:-2,:-2]+.5,self.ii[:-2,:-2]+.5,Vy_average,Vx_average,color='black')
@@ -104,16 +100,11 @@ class Matplot(object):
         plt.xlim([0,self.j_res-2])
 
 
-    def _plot_simple_w_colorbar(self, parameter, array, title=None, cmap='seismic'):
+    def _plot_simple_w_colorbar(self, parameter, array, title=None, cmap='seismic', fontsize=30):
         if not title:
             title=array
-        plt.title(title)
+        plt.title(title, fontsize=fontsize)
         plt.imshow(parameter[array],
                    interpolation='none',
                    cmap=cmap)
-        plt.colorbar()
-
-    def _plot_visocity(self, parameters ):
-        plt.title("Viscosity")
-        plt.imshow(parameters['eta_n'],interpolation='none',cmap='coolwarm')
         plt.colorbar()
