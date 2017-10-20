@@ -161,6 +161,7 @@ class Model(object):
                         so_xy = so_xy*xelvis_s
                         so_xx = so_xx*xelvis_n
 
+                        gx_0, gy_0 = self.gx_0, self.gy_0
                         Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy,
                                         eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell,
                                         lower_boundary=self.bottom_bound, upper_boundary=self.top_bound,
