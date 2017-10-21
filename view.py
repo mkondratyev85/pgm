@@ -48,12 +48,15 @@ class Matplot(object):
         plt.clf()
         fig = plt.figure(figsize = self.figsize)
 
-        subtitle = f'Model size: {self.width/1000} km x {self.height/1000} ' +\
-                   f'{self.j_res} x {self.i_res}, dx={self.dx}m, dy={self.dy}m.' +\
-                   f'Current Time: {parameters["T"]}, Step: {parameters["step"]} ' +\
-                   f'git: {self.git}'
+        subtitle = f'Time: {parameters["T"]}, Step: {parameters["step"]} '
+
+        subtitle2 = f'model size: {self.width/1000} km x {self.height/1000} ' +\
+                    f'{self.j_res} x {self.i_res}, dx={self.dx}m, dy={self.dy}m. ' +\
+                    f'git: {self.git}'
 
         plt.suptitle(subtitle, fontsize=25)
+
+        plt.figtext(.1, .05, subtitle2, size=15)
 
         things_to_plot = ['eta_n', 'Vx', 'Vy', 'e_xx', 'e_xy', 's_xx', 's_xy', 'mu_n', 'w' ]
         titles =         [r'$\eta_n$', r'$V_x$', r'$V_y$', r'$e_{xx}$', r'$e_{xy}$', r'$\sigma_{xx}$', r'$\sigma_{xy}$', r'$\mu_{n}$', r'$\omega$' ]
@@ -70,7 +73,6 @@ class Matplot(object):
 
         plt.subplot(3,4,12)
         self._plot_particals(parameters)
-
 
         plt.savefig('%s/%003d-%s.png' % (self.figname,
                                              parameters['step'],
