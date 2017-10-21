@@ -1,8 +1,9 @@
 import numpy as np
+from scipy import sparse
 
 from Stokeselvis import return_sparse_matrix_Stokes
 from interpolate import interpolate, interpolate2m, interpolate_harmonic, fill_nans
-from scipy import sparse
+from largetime import Time
 
 average = lambda x: (x[:-1,:-1] + x[1:,:-1] +x[1:,1:] +x[:-1,1:])/4.0
 
@@ -10,7 +11,7 @@ class Model(object):
 
     def __init__(self, parameters):
         defaults = {
-                   'T' : 0,
+                   'T' : Time(0),
                    'step' : 0,
                    'width' : None,
                    'height' : None,
@@ -94,9 +95,8 @@ class Model(object):
         T = self.T
         step =  self.step
 
-        if not T : T = 0
+        if not T : T = Time(0)
         if not step: step = -1
-
 
         dt = 0
         plastic_iterations = 1

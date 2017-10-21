@@ -72,7 +72,7 @@ class Matplot(object):
         self._plot_particals(parameters)
 
 
-        plt.savefig('%s/%003d-%12.8f.png' % (self.figname,
+        plt.savefig('%s/%003d-%s.png' % (self.figname,
                                              parameters['step'],
                                              parameters['T']))
         plt.close(fig)
