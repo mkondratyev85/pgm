@@ -47,7 +47,6 @@ class Matplot(object):
         """ Make 12 plots on a list """
         plt.clf()
         fig = plt.figure(figsize = self.figsize)
-        print(fig.get_size_inches())
 
         subtitle = f'Model size: {self.width/1000} km x {self.height/1000} ' +\
                    f'{self.j_res} x {self.i_res}, dx={self.dx}m, dy={self.dy}m.' +\
@@ -82,7 +81,6 @@ class Matplot(object):
         mxx, myy = parameters['mxx'], parameters['myy']
         m_cat = parameters['m_cat']
 
-        print(min(self.figsize))
         size = min(self.figsize)/m_cat.size*5000
         if title:
             plt.title(title, fontsize=15)

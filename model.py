@@ -23,6 +23,8 @@ class Model(object):
                    'left_bound' : None,
                    'top_bound' : None,
                    'bottom_bound' : None,
+                   #'advect_scheme' : 'simple',
+                   'advect_scheme' : 'Runge-Kutta 2nd order',
 
         }
         self.markers = {'mxx' : None,
@@ -236,8 +238,9 @@ class Model(object):
                 m_s_xy_ = m_s_xy + m_s_xy * 2 * m_a
                 m_s_xx, m_s_xy = m_s_xx_, m_s_xy_
 
-                mxx += m_Vx*dt/dx
-                myy += m_Vy*dt/dy
+                # mxx += m_Vx*dt/dx
+                # myy += m_Vy*dt/dy
+                self.advect(mxx, myy, m_Vx, m_Vy, Vx, Vy, dt)
 
                 T += dt
                 step +=1
@@ -277,3 +280,18 @@ class Model(object):
                               'w' : w
                              }
                 yield parameters
+    def advect(self, mxx, myy, m_Vx, m_Vy, Vx, Vy, dt ):
+        dx, dy = self.dx, self.dy
+        if self.advect_scheme=='simple':
+            mxx += m_Vx*dt/dx
+            myy += m_Vy*dt/dy
+        elif self.advect_scheme=='Runge-Kutta 2nd order':
+            mxx_b = mxx + 0.5*m_Vx*dt/dx
+            myy_b = myy + 0.5*m_Vy*dt/dy
+
+            m_Vx_eff = interpolate2m(mxx_b   , myy_b-.5, Vx[:-1,:])
+            m_Vy_eff = interpolate2m(mxx_b-.5, myy_b   , Vy[:,:-1])
+
+            mxx += m_Vx_eff*dt/dx
+            myy += m_Vy_eff*dt/dy
+        return mxx, myy
