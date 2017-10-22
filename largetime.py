@@ -57,6 +57,8 @@ class Time(object):
 
     def __str__(self):
         for unit in self._units:
+            if unit == 'months':
+                continue
             f = self._units[unit]
             t = self._sec /f(1)
             if len(str(int(t)))>3:
