@@ -11,7 +11,7 @@ i_res  =  73 # height resolution
 gx_0 = 0 # horizontal gravity field in m/s2
 gy_0 = 10 # vertical gravity field in m/s2
 
-pdensity = 5
+pdensity = 10
 
 model_prop = load_model(i_res, j_res, pdensity)
 
