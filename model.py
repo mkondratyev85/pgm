@@ -47,6 +47,9 @@ class Model(object):
                         'm_e_xx' : None,
                         'm_e_xy' : None,
                         'm_P' : None,
+                        'markers_index_list' : [100,6000],
+                        'moving_points_index_list' : [(100, 0, 0),
+                                                      (6000, 0,0 )]
                        }
 
         self.__dict__.update(defaults)
@@ -261,7 +264,6 @@ class Model(object):
                 #sii = (s_xx**2 + average(s_xy)**2)**.5
                 #eii = (e_xx**2 + average(e_xy)**2)**.5
 
-
                 #if step % step : continue
 
                 parameters = {'T' : T,
@@ -282,7 +284,9 @@ class Model(object):
                               'xelvis_s' : xelvis_s,
                               'mu_n' : mu_n,
                               'mu_s' : mu_s,
-                              'w' : w
+                              'w' : w,
+                              'markers_index_list' : self.markers_index_list,
+                              'moving_points_index_list' : self.moving_points_index_list,
                              }
                 yield parameters
     def interpolate_stress_changes(self, mxx, myy, m_s_xx, m_s_xy, s_xx=None, s_xy=None, ds_xx=None, ds_xy=None, dt=None ):
@@ -303,8 +307,6 @@ class Model(object):
             d_ = (-d_ve*dt/m_dt_maxwell).astype(np.float)
             m_s_xx_nodes = interpolate2m(mxx-.5,myy-.5,s_xx)
             m_s_xy_nodes = interpolate2m(mxx,myy,s_xy)
-            #m_ds_xx_subgrid = (m_s_xx_nodes - m_s_xx)*(1-np.exp(-d_ve*dt/m_dt_maxwell))
-            #m_ds_xy_subgrid = (m_s_xy_nodes - m_s_xy)*(1-np.exp(-d_ve*dt/m_dt_maxwell))
             m_ds_xx_subgrid = (m_s_xx_nodes - m_s_xx)*(1-np.exp(d_))
             m_ds_xy_subgrid = (m_s_xy_nodes - m_s_xy)*(1-np.exp(d_))
             (ds_xx_subgrid,) = interpolate(mxx+.5,myy+.5,i_res,j_res, (m_ds_xx_subgrid, ))
