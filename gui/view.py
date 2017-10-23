@@ -64,6 +64,24 @@ class View(object):
         self.canvas.show()
         self.canvas.get_tk_widget().pack(side=Tk.LEFT, fill=Tk.BOTH)
 
+        # create right side panel
+        group = Tk.Frame(self.root)
+        group.pack(side=Tk.RIGHT,fill=Tk.Y)
+
+        # create list of materials
+        catgroup = Tk.LabelFrame(group, text="List of categories:")
+        catgroup.pack(fill=Tk.X)
+
+        self.lb_materials = Tk.Listbox(catgroup)
+        # self.lb_materials.bind("<<ListboxSelect>>", self.listbox_get2)
+        self.lb_materials.pack(fill=Tk.X)
+
+    def update_lb_materials(self, *args):
+        listbox = self.lb_materials
+        listbox.delete(0, Tk.END)
+        for (i,item) in enumerate([i["name"] for i in self.materials]):
+            listbox.insert(Tk.END, "%s : %s" % (i+1, item))
+        if self.selected_category: listbox.activate(self.selected_category)
 
     def main_loop(self):
         self.root.mainloop()
