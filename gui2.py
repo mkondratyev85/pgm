@@ -46,9 +46,6 @@ class View(object):
         self.root = Tk.Tk()
         self.root.wm_title("PGM Model Constructor")
 
-        #self.model_materials = observable([])
-        #self.model_materials.bind(self.material_changed)
-
         my_cmap = matplotlib.cm.get_cmap('copper')
         my_cmap.set_under('r')
 
@@ -83,7 +80,7 @@ class View(object):
         self.sinphivar = Tk.StringVar()
 
         self.materialvar = Tk.StringVar()
-        self.materialvar.trace("w", self.material_selected2)
+        self.materialvar.trace("w", self.material_selected)
         material = ttk.Combobox(propgroup, textvariable=self.materialvar)
         material['values'] = (list(materials.keys()))
         material.current(0)
@@ -145,7 +142,7 @@ class View(object):
                        "C":materials["default"]["C"],
                        "sinphi":materials["default"]["sinphi"], })
 
-    def material_selected(self, *args):
+    def material_selected(self, update_list=True, *args):
         print('material_selected')
         model_materials = self.model_materials
         muvar = self.muvar
@@ -153,20 +150,22 @@ class View(object):
         rhovar = self.rhovar
         if self.selected_category == None:
             return False
-        print (self.selected_category)
+        print ('selected category = ' ,self.selected_category)
         selectedmaterial = self.materialvar.get()
+        print ('selected material = ' ,selectedmaterial)
         model_materials[self.selected_category] = { "name":selectedmaterial,
                                                "rho":materials[selectedmaterial]["rho"],
                                                "eta":materials[selectedmaterial]["eta"],
                                                "mu":materials[selectedmaterial]["mu"],
                                                "C":materials[selectedmaterial]["C"],
                                                "sinphi":materials[selectedmaterial]["sinphi"], }
-        self.model_materials.set(model_materials)
-        self.muvar.set("mu = %s" % model_materials.get()[self.selected_category]["mu"])
-        self.rhovar.set("rho = %s" % model_materials.get()[self.selected_category]["rho"])
-        self.etavar.set("eta = %s" % model_materials.get()[self.selected_category]["eta"])
-        self.Cvar.set("C = %s" % model_materials.get()[self.selected_category]["C"])
-        self.sinphivar.set("sinphi = %s" % model_materials.get()[self.selected_category]["sinphi"])
+        self.muvar.set("mu = %s" % model_materials[self.selected_category]["mu"])
+        self.rhovar.set("rho = %s" % model_materials[self.selected_category]["rho"])
+        self.etavar.set("eta = %s" % model_materials[self.selected_category]["eta"])
+        self.Cvar.set("C = %s" % model_materials[self.selected_category]["C"])
+        self.sinphivar.set("sinphi = %s" % model_materials[self.selected_category]["sinphi"])
+        if update_list:
+            self.update_category_list()
 
     def update_category_list(self):
         listbox = self.listbox
@@ -209,7 +208,9 @@ class View(object):
         image_to_show = self.image.copy()
         image_to_show[image_to_show == self.selected_category] = -1
         self._redraw_canvas(image_to_show)
-        #selectedmaterial = self.model_materials[self.selected_category]["name"]
+        selectedmaterial = self.model_materials[self.selected_category]["name"]
+        self.materialvar.set(selectedmaterial)
+        self.material_selected(update_list=False)
 
     def listbox_get(self, event):
         print('listbox_get')
