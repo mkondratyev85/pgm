@@ -25,7 +25,7 @@ class observable(object):
 		self._var[index] = value
 		for callback in self._observers:
 			callback(self._var)
-	
+
 	def erase(self):
 		self._var = []
 
@@ -81,6 +81,7 @@ def material_selected(*args):
 
 def listbox_get(event):
 	l = event.widget
+	print (l.curselection())
 	sel = int(l.curselection()[0])
 	image_to_show = image.copy()
 	image_to_show[image_to_show == sel] = -1
@@ -225,7 +226,7 @@ def load_model(i_res, j_res, marker_density):
 	for idx in range(len(mxx)):
 		j,i = mj[idx], mi[idx]
 		values[idx] = image[i,j]
-	
+
 	values = values.astype(int)
 
 	rho_key = np.array({rho_list:s})
@@ -251,14 +252,14 @@ def load_model(i_res, j_res, marker_density):
 	left_bound = "{left:s}"
 	right_bound = "{right:s}"
 
-	model_prop = {p:s} "mxx":mxx, "myy":myy, "m_cat": m_cat, "m_rho":m_rho, "m_eta":m_eta, "m_mu":m_mu, 
-	"m_C":m_C, "m_sinphi":m_sinphi, "top_bound":top_bound, "bottom_bound":bottom_bound, 
+	model_prop = {p:s} "mxx":mxx, "myy":myy, "m_cat": m_cat, "m_rho":m_rho, "m_eta":m_eta, "m_mu":m_mu,
+	"m_C":m_C, "m_sinphi":m_sinphi, "top_bound":top_bound, "bottom_bound":bottom_bound,
 	"left_bound":left_bound, "right_bound":right_bound,
 	"m_s_xx": m_s_xx, "m_s_xy": m_s_xy, "m_e_xx": m_e_xx, "m_e_xy": m_e_xy, "m_P": m_P {p2:s}
 
 	return model_prop"""
-	
-#	return mxx, myy, m_cat, m_rho, m_eta, m_mu, m_C, m_sinphi, top_bound, bottom_bound, left_bound, right_bound """ 
+
+#	return mxx, myy, m_cat, m_rho, m_eta, m_mu, m_C, m_sinphi, top_bound, bottom_bound, left_bound, right_bound """
 	context={
 			"fname":"%s" % fname,
 			"rho_list":'%s' % [model_materials[i]['rho'] for i in range(len( model_materials.get()))],
