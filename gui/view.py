@@ -15,7 +15,13 @@ class View(object):
 
     def __init__(self, fload, fsave, fadd,
                  array, materials, boundaries, moving_cells):
+        # set common variables
+        self.array = array
+        self.materials = materials
+        self.boundaries = boundaries
+        self.moving_cells = moving_cells
 
+        # build GUI
         self.root = Tk.Tk()
         self.root.wm_title("PGM Model Constructor")
 
@@ -39,20 +45,36 @@ class View(object):
                                           filetypes=(("python files", "*.py"),
                                                      ("all files", "*.*")))))
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.root.quit)
+        filemenu.add_command(label="Exit", command=self.quit)
         menubar.add_cascade(label="File", menu=filemenu)
 
         # display the menu
         self.root.config(menu=menubar)
 
-    # def save(self):
-    # 	fname = Tk.filedialog.asksaveasfilename()
-    #     self.fsave(fname)
+
+        # create custom colormap for image
+        self.my_cmap = matplotlib.cm.get_cmap('copper')
+        self.my_cmap.set_under('r')
+
+        # create canvas
+        fig = plt.figure()
+        self.im = plt.imshow(self.array, cmap=self.my_cmap)
+        ax = plt.gca()
+        self.canvas = FigureCanvasTkAgg(fig, master=self.root)
+        self.canvas.show()
+        self.canvas.get_tk_widget().pack(side=Tk.LEFT, fill=Tk.BOTH)
+
 
     def main_loop(self):
         self.root.mainloop()
 
     def quit(self, *args):
-        print('quit button press...')
         self.root.quit()
         self.root.destroy()
+
+    def redraw_canvas(self, im_to_show=None):
+        if im_to_show == None:
+            self.im = plt.imshow(self.array, cmap=self.my_cmap)
+        else:
+            self.im.set_data(im_to_show)
+        self.canvas.draw()
