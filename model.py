@@ -26,12 +26,12 @@ class Model(object):
                    'left_bound' : None,
                    'top_bound' : None,
                    'bottom_bound' : None,
-                   #'stress_changes' : 'simple',
+                   'stress_changes' : 'simple',
                    #'stress_changes' : '2nd order',
-                   'stress_changes' : 'subgrid',
+                   #'stress_changes' : 'subgrid',
                    'subgrid_relaxation' : .5,
-                   #'advect_scheme' : 'simple',
-                   'advect_scheme' : 'Runge-Kutta 2nd order',
+                   'advect_scheme' : 'simple',
+                   #'advect_scheme' : 'Runge-Kutta 2nd order',
 
         }
         self.markers = {'mxx' : None,
@@ -47,9 +47,12 @@ class Model(object):
                         'm_e_xx' : None,
                         'm_e_xy' : None,
                         'm_P' : None,
-                        'markers_index_list' : [100,6000],
-                        'moving_points_index_list' : [(100, 0, 0),
-                                                      (6000, 0,0 )]
+                        # 'markers_index_list' : [100,6000, 3000],
+                        'markers_index_list' : [],
+                        'moving_points_index_list' : [],
+                        # 'moving_points_index_list' : [(100, 0, 0),
+                        #                               (6000,0,-1*10-3),
+                        #                               (3000,0,-1*10-7)]
                        }
 
         self.__dict__.update(defaults)
@@ -173,10 +176,18 @@ class Model(object):
                         so_xx = so_xx*xelvis_n
 
                         gx_0, gy_0 = self.gx_0, self.gy_0
+
+                        Vbound = {}
+                        for index, Vx, Vy in self.moving_points_index_list:
+                            x,y = mxx[index][0], myy[index][0]
+                            i,j = int(round(y)), int(round(x))
+                            Vbound[(i,j)] = [Vx,Vy]
+
                         Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy,
                                         eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell,
                                         lower_boundary=self.bottom_bound, upper_boundary=self.top_bound,
-                                        right_boundary=self.right_bound, left_boundary=self.left_bound)
+                                        right_boundary=self.right_bound, left_boundary=self.left_bound,
+                                        Vbound=Vbound)
 
                         Stokes_solve = sparse.linalg.spsolve(Stokes_sparse, vector)
                         P  = Stokes_solve[::3].reshape((i_res),(j_res))
