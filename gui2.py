@@ -117,10 +117,45 @@ class View(object):
         topvar.set("sleep")
         bottomvar.set("sleep")
 
+        movingpointsgroup = Tk.LabelFrame(group, text="Moving points:")
+        movingpointsgroup.pack(fill=Tk.X)
+
+        self.movingpoints = []
+        self.mp_listbox = Tk.Listbox(movingpointsgroup)
+        #self.mp_listbox.bind("<<ListboxSelect>>", self.listbox_get2)
+        self.mp_listbox.pack(fill=Tk.X)
+        add_mp = Tk.Button(movingpointsgroup, text = 'Add', command = self.add_mp).pack()
+        del_mp = Tk.Button(movingpointsgroup, text = 'Del', command = self.del_mp).pack(side=Tk.BOTTOM)
+
         self.update_category_list()
+        self.update_moving_points_list()
+
+        fig.canvas.callbacks.connect('button_press_event', self.canvas_click_callback)
+        fig.canvas.mpl_connect('button_press_event', self.canvas_click_callback)
 
         button_save = Tk.Button(group, text = 'Save...', command = self.save).pack()
         button_quit = Tk.Button(group, text = 'Quit', command = self.quit).pack(side=Tk.BOTTOM)
+
+
+    def canvas_click_callback(self, event):
+        self.clicked_point = (event.xdata, event.ydata)
+        print( event.xdata, event.ydata)
+
+    def add_mp(self, *args):
+        if self.clicked_point:
+            self.movingpoints.append(self.clicked_point)
+        self.update_moving_points_list()
+
+    def del_mp(self, *args):
+        pass
+
+    def update_moving_points_list(self, *args):
+        listbox = self.mp_listbox
+        movingpoints = self.movingpoints
+        listbox.delete(0, Tk.END)
+        for (i,mp) in enumerate([mp for mp in movingpoints]):
+            listbox.insert(Tk.END, "%s : %s" % (i+1, mp))
+        # if self.selected_category: listbox.activate(self.selected_category)
 
     def _redraw_canvas(self, im_to_show):
     	self.im.set_data(im_to_show)
