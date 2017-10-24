@@ -99,6 +99,33 @@ class View(object):
         Clabel = Tk.Label(propgroup,textvariable=self.Cvar).pack()
         sinphilabel = Tk.Label(propgroup,textvariable=self.sinphivar).pack()
 
+        # create boundary conditions radiobuttons
+
+        boundgroup = Tk.LabelFrame(group, text="Boundary conditions:")
+        boundgroup.pack(fill=Tk.X)
+
+        leftvar = Tk.StringVar()
+        rightvar = Tk.StringVar()
+        topvar = Tk.StringVar()
+        bottomvar = Tk.StringVar()
+
+        Tk.Radiobutton(boundgroup,text="Free slip", variable=topvar, value="sleep").pack(anchor=Tk.N)
+        Tk.Radiobutton(boundgroup,text="No free slip", variable=topvar, value="nosleep").pack(anchor=Tk.N)
+
+        Tk.Radiobutton(boundgroup,text="Free slip", variable=leftvar, value="sleep").pack(anchor=Tk.W)
+        Tk.Radiobutton(boundgroup,text="No free slip", variable=leftvar, value="nosleep").pack(anchor=Tk.W)
+
+        Tk.Radiobutton(boundgroup,text="Free slip", variable=rightvar, value="sleep").pack(anchor=Tk.E)
+        Tk.Radiobutton(boundgroup,text="No free slip", variable=rightvar, value="nosleep").pack(anchor=Tk.E)
+
+        Tk.Radiobutton(boundgroup,text="Free slip", variable=bottomvar, value="sleep").pack(anchor=Tk.S)
+        Tk.Radiobutton(boundgroup,text="No free slip", variable=bottomvar, value="nosleep").pack(anchor=Tk.S)
+
+        leftvar.set("sleep")
+        rightvar.set("sleep")
+        topvar.set("sleep")
+        bottomvar.set("sleep")
+
     def material_selected(self, *args):
         if self.selected_category == None:
             return False
