@@ -13,6 +13,7 @@ from .materials import materials as materials_
 class View(object):
     selected_cell = None
     selected_category = None
+    moving_circles = []
 
     def __init__(self, fload, fsave, fadd,
                  array, materials, boundaries, moving_cells):
@@ -21,6 +22,9 @@ class View(object):
         self.materials = materials
         self.boundaries = boundaries
         self.moving_cells = moving_cells
+
+        # set bindings
+        self.moving_cells.bind(self.redraw_moving_cells)
 
         # build GUI
         self.root = Tk.Tk()
@@ -158,9 +162,7 @@ class View(object):
         self.selected_circle.remove()
         self.canvas.draw()
 
-
     def update_moving_cells_list(self, *args):
-        print('update')
         listbox = self.mp_listbox
         listbox.delete(0, Tk.END)
         for cell in self.moving_cells:
@@ -223,6 +225,20 @@ class View(object):
     def quit(self, *args):
         self.root.quit()
         self.root.destroy()
+
+    def redraw_moving_cells(self, *args):
+        #remove artists
+        for circle in self.moving_circles:
+            circle.remove()
+
+        # add artists
+        self.moving_circles = []
+        for cell in self.moving_cells:
+            (x,y), (Vx, Vy) = cell
+            circle = plt.Circle((x,y), .1, color='white')
+            self.ax.add_artist(circle)
+            self.moving_circles.append(circle)
+        self.canvas.draw()
 
     def redraw_canvas(self, im_to_show=None):
         if not im_to_show is None:
