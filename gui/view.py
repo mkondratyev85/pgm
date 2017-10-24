@@ -135,7 +135,7 @@ class View(object):
 
         self.movingpoints = []
         self.mp_listbox = Tk.Listbox(movingpointsgroup)
-        #self.mp_listbox.bind("<<ListboxSelect>>", self.listbox_get2)
+        # self.mp_listbox.bind("<<ListboxSelect>>", self.listbox_get2)
         self.mp_listbox.pack(fill=Tk.X)
         add_mp = Tk.Button(movingpointsgroup, text = 'Add', command = self.add_mp).pack()
         del_mp = Tk.Button(movingpointsgroup, text = 'Del', command = self.del_mp).pack(side=Tk.BOTTOM)
@@ -145,24 +145,41 @@ class View(object):
         self.fig = fig
 
     def add_mp(self, *args):
-        pass
+        if self.selected_cell is None:
+            return
+
+        # check if we already have this cell in list
+        if self.selected_cell in [(x,y) for (x,y),(Vx,Vy) in self.moving_cells]:
+            return
+
+        Vx, Vy = 0,0
+        self.moving_cells.append((self.selected_cell,(Vx,Vy)))
+        self.selected_cell = None
+        self.selected_circle.remove()
+        self.canvas.draw()
+
+
+    def update_moving_cells_list(self, *args):
+        print('update')
+        listbox = self.mp_listbox
+        listbox.delete(0, Tk.END)
+        for cell in self.moving_cells:
+            (x,y),(Vx,Vy) = cell
+            listbox.insert(Tk.END, f"{Vx}, {Vy}")
 
     def del_mp(self, *args):
         pass
 
     def canvas_click_callback(self, event):
-        x, y = event.xdata, event.ydata
-        x_, y_ = int(round(x)), int(round(y))
-        self.selected_cell = (int(event.xdata), int(event.ydata))
-        print( event.xdata, event.ydata)
+        x, y = int(round(event.xdata)), int(round(event.ydata))
 
-        circle = plt.Circle((x_, y_), .1, color='orange')
-        self.ax.add_artist(circle)
-
-        # s = plt.scatter([event.xdata], [event.ydata], c='Red')
-        # print(dir(s))
-        # print(s.get_paths())
-        # #self.canvas.create_rectangle(event.xdata,event.ydata,event.xdata+2,event.ydata+2)
+        if self.selected_cell is None:
+            self.selected_cell =  x, y
+            self.selected_circle = plt.Circle((x, y), .1, color='orange')
+            self.ax.add_artist(self.selected_circle)
+        else:
+            self.selected_cell =  x, y
+            self.selected_circle.center = x, y
         self.canvas.draw()
 
     def material_selected(self, *args):
@@ -212,7 +229,4 @@ class View(object):
             self.im.set_data(im_to_show)
         else:
             self.im = plt.imshow(self.array, cmap=self.my_cmap)
-        # if not self.selected_cell is None:
-        #     px , py = self.selected_cell
-        #     plt.scatter([px], [py], c='Red')
         self.canvas.draw()

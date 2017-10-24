@@ -15,7 +15,7 @@ class Controller(object):
                                  'bottomvar': '1',
                                  'leftvar': '1',
                                  'rightvar': '1'})
-        self.moving_cells = Observable([1, 2, 3])
+        self.moving_cells = Observable([])
 
         self.Model = Model(self.array, self.materials, self.boundaries, self.moving_cells)
         self.View = View(fload=self.fload, fsave=self.fsave, fadd=self.fadd,
@@ -23,6 +23,7 @@ class Controller(object):
 
         # bind variables
         self.materials.bind(self.View.update_lb_materials)
+        self.moving_cells.bind(self.View.update_moving_cells_list)
 
     def run(self):
         self.View.main_loop()
