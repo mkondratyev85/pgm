@@ -124,6 +124,8 @@ class View(object):
         image_to_show = self.array.get().copy()
         image_to_show[image_to_show == self.selected_category] = -1
         self.redraw_canvas(image_to_show)
+        material = self.materials[self.selected_category]['name']
+        self.materialvar.set(material)
 
 
     def update_lb_materials(self, *args):
