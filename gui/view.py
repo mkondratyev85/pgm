@@ -10,6 +10,25 @@ import tkinter.ttk as ttk
 
 from .materials import materials as materials_
 
+class MyDialog:
+
+    def __init__(self, parent):
+
+        top = self.top = Tk.Toplevel(parent)
+
+        Tk.Label(top, text="Value").pack()
+
+        self.e = Tk.Entry(top)
+        self.e.pack(padx=5)
+
+        b = Tk.Button(top, text="OK", command=self.ok)
+        b.pack(pady=5)
+
+    def ok(self):
+        print ("value is", self.e.get())
+
+        self.top.destroy()
+
 class View(object):
     selected_cell = None
     selected_category = None
@@ -142,10 +161,12 @@ class View(object):
         self.mp_listbox.bind("<<ListboxSelect>>", self.mp_select)
         self.mp_listbox.pack(fill=Tk.X)
         add_mp = Tk.Button(movingpointsgroup, text = 'Add', command = self.add_mp).pack()
+        del_mp = Tk.Button(movingpointsgroup, text = 'Set Vx Vy', command = self.set_mp).pack()
         del_mp = Tk.Button(movingpointsgroup, text = 'Del', command = self.del_mp).pack(side=Tk.BOTTOM)
 
         fig.canvas.callbacks.connect('button_press_event', self.canvas_click_callback)
         fig.canvas.mpl_connect('button_press_event', self.canvas_click_callback)
+
         self.fig = fig
 
     def add_mp(self, *args):
@@ -161,6 +182,17 @@ class View(object):
         self.selected_cell = None
         self.selected_circle.remove()
         self.canvas.draw()
+
+    def set_mp(self, *args):
+        listbox = self.mp_listbox
+        try:
+            selected_index =  int(listbox.curselection()[0])
+        except IndexError:
+            print('cant select moving cell')
+            return
+        d = MyDialog(self.root)
+        self.root.wait_window(d.top)
+
 
     def update_moving_cells_list(self, *args):
         listbox = self.mp_listbox
