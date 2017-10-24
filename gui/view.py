@@ -24,6 +24,8 @@ class MyDialog:
         Tk.Label(top, text="Vy").pack()
         self.eVy = Tk.Entry(top)
         self.eVy.pack(padx=5)
+        self.eVx.insert(0,moving_cells[index][1][0])
+        self.eVy.insert(0,moving_cells[index][1][1])
 
         b = Tk.Button(top, text="OK", command=self.ok)
         b.pack(pady=5)
