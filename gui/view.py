@@ -11,6 +11,7 @@ import tkinter.ttk as ttk
 from .materials import materials as materials_
 
 class View(object):
+    selected_cell = None
     selected_category = None
 
     def __init__(self, fload, fsave, fadd,
@@ -55,11 +56,12 @@ class View(object):
         # create custom colormap for image
         self.my_cmap = matplotlib.cm.get_cmap('copper')
         self.my_cmap.set_under('r')
+        self.my_cmap.set_over('w')
 
         # create canvas
         fig = plt.figure()
         self.im = plt.imshow(self.array, cmap=self.my_cmap)
-        ax = plt.gca()
+        self.ax = plt.gca()
         self.canvas = FigureCanvasTkAgg(fig, master=self.root)
         self.canvas.show()
         self.canvas.get_tk_widget().pack(side=Tk.LEFT, fill=Tk.BOTH)
@@ -140,6 +142,7 @@ class View(object):
 
         fig.canvas.callbacks.connect('button_press_event', self.canvas_click_callback)
         fig.canvas.mpl_connect('button_press_event', self.canvas_click_callback)
+        self.fig = fig
 
     def add_mp(self, *args):
         pass
@@ -148,8 +151,19 @@ class View(object):
         pass
 
     def canvas_click_callback(self, event):
-        self.clicked_point = (event.xdata, event.ydata)
+        x, y = event.xdata, event.ydata
+        x_, y_ = int(round(x)), int(round(y))
+        self.selected_cell = (int(event.xdata), int(event.ydata))
         print( event.xdata, event.ydata)
+
+        circle = plt.Circle((x_, y_), .1, color='orange')
+        self.ax.add_artist(circle)
+
+        # s = plt.scatter([event.xdata], [event.ydata], c='Red')
+        # print(dir(s))
+        # print(s.get_paths())
+        # #self.canvas.create_rectangle(event.xdata,event.ydata,event.xdata+2,event.ydata+2)
+        self.canvas.draw()
 
     def material_selected(self, *args):
         if self.selected_category == None:
@@ -179,7 +193,6 @@ class View(object):
         material = self.materials[self.selected_category]['name']
         self.materialvar.set(material)
 
-
     def update_lb_materials(self, *args):
         listbox = self.lb_materials
         listbox.delete(0, Tk.END)
@@ -199,4 +212,7 @@ class View(object):
             self.im.set_data(im_to_show)
         else:
             self.im = plt.imshow(self.array, cmap=self.my_cmap)
+        # if not self.selected_cell is None:
+        #     px , py = self.selected_cell
+        #     plt.scatter([px], [py], c='Red')
         self.canvas.draw()
