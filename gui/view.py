@@ -12,21 +12,25 @@ from .materials import materials as materials_
 
 class MyDialog:
 
-    def __init__(self, parent):
+    def __init__(self, parent, moving_cells, index):
+        self.moving_cells = moving_cells
+        self.index = index
 
         top = self.top = Tk.Toplevel(parent)
 
-        Tk.Label(top, text="Value").pack()
-
-        self.e = Tk.Entry(top)
-        self.e.pack(padx=5)
+        Tk.Label(top, text="Vx").pack()
+        self.eVx = Tk.Entry(top)
+        self.eVx.pack(padx=5)
+        Tk.Label(top, text="Vy").pack()
+        self.eVy = Tk.Entry(top)
+        self.eVy.pack(padx=5)
 
         b = Tk.Button(top, text="OK", command=self.ok)
         b.pack(pady=5)
-
     def ok(self):
-        print ("value is", self.e.get())
-
+        xy, VxVy = self.moving_cells[self.index]
+        Vx, Vy = self.eVx.get(), self.eVy.get()
+        self.moving_cells[self.index] = xy, (float(Vx), float(Vy))
         self.top.destroy()
 
 class View(object):
@@ -190,7 +194,8 @@ class View(object):
         except IndexError:
             print('cant select moving cell')
             return
-        d = MyDialog(self.root)
+        moving_cell = self.moving_cells[selected_index]
+        d = MyDialog(self.root, self.moving_cells, selected_index)
         self.root.wait_window(d.top)
 
 
