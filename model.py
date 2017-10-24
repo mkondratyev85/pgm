@@ -26,12 +26,12 @@ class Model(object):
                    'left_bound' : None,
                    'top_bound' : None,
                    'bottom_bound' : None,
-                   #'stress_changes' : 'simple',
+                   'stress_changes' : 'simple',
                    #'stress_changes' : '2nd order',
-                   'stress_changes' : 'subgrid',
+                   #'stress_changes' : 'subgrid',
                    'subgrid_relaxation' : .5,
-                   #'advect_scheme' : 'simple',
-                   'advect_scheme' : 'Runge-Kutta 2nd order',
+                   'advect_scheme' : 'simple',
+                   #'advect_scheme' : 'Runge-Kutta 2nd order',
 
         }
         self.markers = {'mxx' : None,
@@ -47,6 +47,12 @@ class Model(object):
                         'm_e_xx' : None,
                         'm_e_xy' : None,
                         'm_P' : None,
+                        # 'markers_index_list' : [100,6000, 3000],
+                        'markers_index_list' : [],
+                        'moving_points_index_list' : [],
+                        # 'moving_points_index_list' : [(100, 0, 0),
+                        #                               (6000,0,-1*10-3),
+                        #                               (3000,0,-1*10-7)]
                        }
 
         self.__dict__.update(defaults)
@@ -170,10 +176,18 @@ class Model(object):
                         so_xx = so_xx*xelvis_n
 
                         gx_0, gy_0 = self.gx_0, self.gy_0
+
+                        Vbound = {}
+                        for index, Vx, Vy in self.moving_points_index_list:
+                            x,y = mxx[index][0], myy[index][0]
+                            i,j = int(round(y)), int(round(x))
+                            Vbound[(i,j)] = [Vx,Vy]
+
                         Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy,
                                         eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell,
                                         lower_boundary=self.bottom_bound, upper_boundary=self.top_bound,
-                                        right_boundary=self.right_bound, left_boundary=self.left_bound)
+                                        right_boundary=self.right_bound, left_boundary=self.left_bound,
+                                        Vbound=Vbound)
 
                         Stokes_solve = sparse.linalg.spsolve(Stokes_sparse, vector)
                         P  = Stokes_solve[::3].reshape((i_res),(j_res))
@@ -261,7 +275,6 @@ class Model(object):
                 #sii = (s_xx**2 + average(s_xy)**2)**.5
                 #eii = (e_xx**2 + average(e_xy)**2)**.5
 
-
                 #if step % step : continue
 
                 parameters = {'T' : T,
@@ -282,7 +295,9 @@ class Model(object):
                               'xelvis_s' : xelvis_s,
                               'mu_n' : mu_n,
                               'mu_s' : mu_s,
-                              'w' : w
+                              'w' : w,
+                              'markers_index_list' : self.markers_index_list,
+                              'moving_points_index_list' : self.moving_points_index_list,
                              }
                 yield parameters
     def interpolate_stress_changes(self, mxx, myy, m_s_xx, m_s_xy, s_xx=None, s_xy=None, ds_xx=None, ds_xy=None, dt=None ):
@@ -303,8 +318,6 @@ class Model(object):
             d_ = (-d_ve*dt/m_dt_maxwell).astype(np.float)
             m_s_xx_nodes = interpolate2m(mxx-.5,myy-.5,s_xx)
             m_s_xy_nodes = interpolate2m(mxx,myy,s_xy)
-            #m_ds_xx_subgrid = (m_s_xx_nodes - m_s_xx)*(1-np.exp(-d_ve*dt/m_dt_maxwell))
-            #m_ds_xy_subgrid = (m_s_xy_nodes - m_s_xy)*(1-np.exp(-d_ve*dt/m_dt_maxwell))
             m_ds_xx_subgrid = (m_s_xx_nodes - m_s_xx)*(1-np.exp(d_))
             m_ds_xy_subgrid = (m_s_xy_nodes - m_s_xy)*(1-np.exp(d_))
             (ds_xx_subgrid,) = interpolate(mxx+.5,myy+.5,i_res,j_res, (m_ds_xx_subgrid, ))

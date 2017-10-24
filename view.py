@@ -81,13 +81,16 @@ class Matplot(object):
 
     def _plot_particals(self, parameters, title = None):
         mxx, myy = parameters['mxx'], parameters['myy']
+        markers_index_list = parameters['markers_index_list']
         m_cat = parameters['m_cat']
 
         size = min(self.figsize)/m_cat.size*5000
         if title:
             plt.title(title, fontsize=15)
         plt.scatter(mxx,myy,c=m_cat,s=size,edgecolors='face',cmap='Blues')
-        plt.colorbar()
+        #plt.colorbar()
+        if len(markers_index_list) > 0:
+            plt.scatter(mxx[markers_index_list],myy[markers_index_list],s=5*size,edgecolors='face',color='Red')
         plt.ylim([self.i_res-1,0])
         plt.xlim([0,self.j_res-1])
 
