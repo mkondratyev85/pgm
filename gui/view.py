@@ -172,11 +172,12 @@ class View(object):
     def mp_select(self, event):
         listbox = self.mp_listbox
         try:
-            selected_cell =  int(event.widget.curselection()[0])
-            (x,y),_ = self.moving_cells[selected_cell]
-            self.canvas_click_callback(event, xy=(x,y))
+            selected_index =  int(event.widget.curselection()[0])
         except IndexError:
             print('cant select moving cell')
+            return
+        (x,y),_ = self.moving_cells[selected_index]
+        self.canvas_click_callback(event, xy=(x,y))
 
     def del_mp(self, *args):
         pass
@@ -186,6 +187,12 @@ class View(object):
             x, y = int(round(event.xdata)), int(round(event.ydata))
         else:
             x, y = xy
+
+        # check if we clicked on existent point
+        if (x, y) in [(xy) for (xy),(Vx,Vy) in self.moving_cells]:
+            index = [(xy) for (xy),_ in self.moving_cells].index((x,y))
+            self.mp_listbox.selection_clear(0,Tk.END)
+            self.mp_listbox.selection_set(index)
 
         if self.selected_cell is None:
             self.selected_cell =  x, y
@@ -229,7 +236,9 @@ class View(object):
         listbox.delete(0, Tk.END)
         for (i,item) in enumerate([i["name"] for i in self.materials]):
             listbox.insert(Tk.END, "%s : %s" % (i+1, item))
-        if self.selected_category: listbox.activate(self.selected_category)
+        if self.selected_category:
+            listbox.selection_clear(0,Tk.END)
+            listbox.selection_set(self.selected_category)
 
     def main_loop(self):
         self.root.mainloop()
