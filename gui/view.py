@@ -11,7 +11,6 @@ import tkinter.ttk as ttk
 from .materials import materials as materials_
 
 class MyDialog:
-
     def __init__(self, parent, moving_cells, index):
         self.moving_cells = moving_cells
         self.index = index

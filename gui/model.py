@@ -35,10 +35,11 @@ class Model(object):
         with  open(f'{fname}.py' ,'w') as myfile:
               myfile.write(template.format(**context))
         np.save("%s" % (fname), self.array)
+        print(materials.get())
         with open(f'{fname}.pickle', 'wb') as f:
-            pickle.dump(materials, f)
-            pickle.dump(self.boundaries, f)
-            pickle.dump(self.moving_cells, f)
+            pickle.dump(materials.get(), f)
+            pickle.dump(self.boundaries.get(), f)
+            pickle.dump(self.moving_cells.get(), f)
 
     def load_from_file(self, fname):
         with open(f'{fname}.pickle', 'rb') as f:

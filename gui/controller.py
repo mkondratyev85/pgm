@@ -32,7 +32,7 @@ class Controller(object):
         print('fload')
 
     def fsave(self, fname):
-        print('fsave')
+        self.Model.save_to_file(fname)
 
     def fadd(self, fname):
         """ load image as png or npy format"""
