@@ -139,7 +139,7 @@ class View(object):
 
         self.movingpoints = []
         self.mp_listbox = Tk.Listbox(movingpointsgroup)
-        # self.mp_listbox.bind("<<ListboxSelect>>", self.listbox_get2)
+        self.mp_listbox.bind("<<ListboxSelect>>", self.mp_select)
         self.mp_listbox.pack(fill=Tk.X)
         add_mp = Tk.Button(movingpointsgroup, text = 'Add', command = self.add_mp).pack()
         del_mp = Tk.Button(movingpointsgroup, text = 'Del', command = self.del_mp).pack(side=Tk.BOTTOM)
@@ -169,11 +169,23 @@ class View(object):
             (x,y),(Vx,Vy) = cell
             listbox.insert(Tk.END, f"{Vx}, {Vy}")
 
+    def mp_select(self, event):
+        listbox = self.mp_listbox
+        try:
+            selected_cell =  int(event.widget.curselection()[0])
+            (x,y),_ = self.moving_cells[selected_cell]
+            self.canvas_click_callback(event, xy=(x,y))
+        except IndexError:
+            print('cant select moving cell')
+
     def del_mp(self, *args):
         pass
 
-    def canvas_click_callback(self, event):
-        x, y = int(round(event.xdata)), int(round(event.ydata))
+    def canvas_click_callback(self, event, xy = None):
+        if xy is None:
+            x, y = int(round(event.xdata)), int(round(event.ydata))
+        else:
+            x, y = xy
 
         if self.selected_cell is None:
             self.selected_cell =  x, y
@@ -225,6 +237,7 @@ class View(object):
     def quit(self, *args):
         self.root.quit()
         self.root.destroy()
+
 
     def redraw_moving_cells(self, *args):
         #remove artists
