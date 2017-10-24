@@ -126,6 +126,31 @@ class View(object):
         topvar.set("sleep")
         bottomvar.set("sleep")
 
+        # create moving points list
+
+        movingpointsgroup = Tk.LabelFrame(group, text="Moving points:")
+        movingpointsgroup.pack(fill=Tk.X)
+
+        self.movingpoints = []
+        self.mp_listbox = Tk.Listbox(movingpointsgroup)
+        #self.mp_listbox.bind("<<ListboxSelect>>", self.listbox_get2)
+        self.mp_listbox.pack(fill=Tk.X)
+        add_mp = Tk.Button(movingpointsgroup, text = 'Add', command = self.add_mp).pack()
+        del_mp = Tk.Button(movingpointsgroup, text = 'Del', command = self.del_mp).pack(side=Tk.BOTTOM)
+
+        fig.canvas.callbacks.connect('button_press_event', self.canvas_click_callback)
+        fig.canvas.mpl_connect('button_press_event', self.canvas_click_callback)
+
+    def add_mp(self, *args):
+        pass
+
+    def del_mp(self, *args):
+        pass
+
+    def canvas_click_callback(self, event):
+        self.clicked_point = (event.xdata, event.ydata)
+        print( event.xdata, event.ydata)
+
     def material_selected(self, *args):
         if self.selected_category == None:
             return False
