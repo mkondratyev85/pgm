@@ -47,4 +47,7 @@ class Model(object):
             boundaries = pickle.load(f)
             moving_cells = pickle.load(f)
         array = np.load(f'{fname}.npy')
-        print(array)
+        self.materials.set(materials)
+        self.boundaries.set(boundaries)
+        self.moving_cells.set(moving_cells)
+        self.array.set(array)

@@ -29,7 +29,8 @@ class Controller(object):
         self.View.main_loop()
 
     def fload(self, fname):
-        print('fload')
+        self.Model.load_from_file(fname[:-3])
+        self.View.redraw_canvas()
 
     def fsave(self, fname):
         self.Model.save_to_file(fname)
