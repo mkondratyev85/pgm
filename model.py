@@ -182,6 +182,8 @@ class Model(object):
                             x,y = mxx[index][0], myy[index][0]
                             i,j = int(round(y)), int(round(x))
                             Vbound[(i,j)] = [Vx,Vy]
+                            print (i,j, Vx, Vy)
+
 
                         Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy,
                                         eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell,
@@ -193,6 +195,7 @@ class Model(object):
                         P  = Stokes_solve[::3].reshape((i_res),(j_res))
                         Vx = Stokes_solve[1::3].reshape((i_res),(j_res))
                         Vy = Stokes_solve[2::3].reshape((i_res),(j_res))
+                        # print (Vx, Vy)
 
                         P *= kcont
 

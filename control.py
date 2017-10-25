@@ -75,32 +75,55 @@ class PGM:
                 self.view.plot12(iteration)
 
 
-def load_image(fname, i_res, j_res, marker_density):
+def load_image(fname, i_res, j_res, marker_density, moving_cells):
     image = np.load(f'{fname}.npy')
     image_i, image_j = image.shape
 
     # markers
     mxx = []
     myy = []
+    moving_cells_index_list = []
+    moving_cells_coordinates_list = [(xy) for xy, VxVy in moving_cells]
+    print(moving_cells)
     for x in range((j_res-1)*2):
         for y in range((i_res-1)*2):
             for _ in range(marker_density):
                 mxx.append((x+np.random.uniform(0,1,1))/2.0)
                 myy.append((y+np.random.uniform(0,1,1))/2.0)
+            # # add special moving particle
+            # if (x,y) in moving_cells_coordinates_list:
+            #     index = moving_cells_coordinates_list.index((x,y))
+            #     _, (Vx, Vy) = moving_cells[index]
+            #     mxx.append(np.asarray([x]))
+            #     myy.append(np.asarray([y]))
+            #     print (mxx[-2:-1])
+            #     print (myy[-2:-1])
+            #     index = len(mxx) -1
+            #     moving_cells_index_list.append((index, Vx, Vy))
+            #     print(index)
+    for (x,y),(Vx,Vy) in moving_cells:
+        x_ = ((x+.5) / image_j) * (j_res)
+        y_ = ((y+.5) / image_i) * (i_res)
+        print (x, image_j, j_res, x_)
+        mxx.append(np.asarray([x_]))
+        myy.append(np.asarray([y_]))
+        index = len(mxx) -1
+        moving_cells_index_list.append((index, Vx, Vy))
+
+
     mxx = np.asarray(mxx)
     myy = np.asarray(myy)
 
+    # TODO: Refactor following block to be inside previous cascade of for loops
     mj = (mxx*image_j/(j_res-1)).astype(int)
     mi = (myy*image_i/(i_res-1)).astype(int)
-
     values = np.zeros(np.shape(mxx))
     for idx in range(len(mxx)):
         j,i = mj[idx], mi[idx]
         values[idx] = image[i,j]
-
     values = values.astype(int)
 
-    return mxx, myy, values
+    return mxx, myy, values, moving_cells_index_list
 
 def load_model_properties(fname):
     with open(f'{fname}.pickle', 'rb') as f:
@@ -110,8 +133,8 @@ def load_model_properties(fname):
     return materials, boundaries, moving_cells
 
 def load_model(fname, i_res, j_res, pdensity):
-    mxx, myy, values = load_image(fname, i_res, j_res, pdensity)
     materials, boundaries, moving_cells  = load_model_properties(fname)
+    mxx, myy, values, moving_cells_index_list = load_image(fname, i_res, j_res, pdensity, moving_cells)
 
     rho_key = np.asarray([material['rho'] for  material in materials])
     eta_key = np.asarray([material['eta'] for  material in materials])
@@ -158,6 +181,9 @@ def load_model(fname, i_res, j_res, pdensity):
                   "m_e_xx": m_e_xx,
                   "m_e_xy": m_e_xy,
                   "m_P": m_P,
+
+                  'moving_points_index_list' : moving_cells_index_list,
+                  'markers_index_list' : [ index for index, Vx, Vy in moving_cells_index_list]
                   }
 
     return model_prop
