@@ -1,4 +1,5 @@
 import numpy as np
+from tkinter import StringVar
 
 from .model import Model
 from .view import View
@@ -9,10 +10,12 @@ class Controller(object):
     def __init__(self):
         self.array = Observable(np.zeros((2,2)))
         self.materials = Observable([])
-        self.boundaries = Observable({'topvar': '1',
-                                 'bottomvar': '1',
-                                 'leftvar': '1',
-                                 'rightvar': '1'})
+        self.boundaries = Observable({})
+        self.boundaries["left_bound"] = 'sleep'
+        self.boundaries["top_bound"] = 'sleep'
+        self.boundaries["right_bound"] = 'sleep'
+        self.boundaries["bottom_bound"] = 'sleep'
+
         self.moving_cells = Observable([])
 
         self.Model = Model(self.array, self.materials, self.boundaries, self.moving_cells)
@@ -22,15 +25,27 @@ class Controller(object):
         # bind variables
         self.materials.bind(self.View.update_lb_materials)
         self.moving_cells.bind(self.View.update_moving_cells_list)
+        # self.boundaries.bind(self.View.update_boundaries_from_outside)
 
     def run(self):
         self.View.main_loop()
 
     def fload(self, fname):
         self.Model.load_from_file(fname[:-3])
+
+        self.View.bottomvar.set(self.boundaries['bottom_bound'])
+        self.View.topvar.set(self.boundaries['top_bound'])
+        self.View.leftvar.set(self.boundaries['left_bound'])
+        self.View.rightvar.set(self.boundaries['right_bound'])
+
         self.View.redraw_canvas()
 
     def fsave(self, fname):
+        self.boundaries['top_bound'] = self.View.topvar.get()
+        self.boundaries['bottom_bound'] = self.View.bottomvar.get()
+        self.boundaries['left_bound'] = self.View.leftvar.get()
+        self.boundaries['right_bound'] = self.View.rightvar.get()
+        print(self.boundaries)
         self.Model.save_to_file(fname)
 
     def fadd(self, fname):

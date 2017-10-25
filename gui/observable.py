@@ -13,8 +13,7 @@ class Observable(object):
 
     def __setitem__(self, index, value):
         self._var[index] = value
-        for callback in self._observers:
-            callback(self._var)
+        self._call_observers()
 
     def __len__(self):
         return len(self._var)
@@ -30,6 +29,9 @@ class Observable(object):
 
     def set(self, value):
         self._var = value
+        self._call_observers()
+
+    def _call_observers(self):
         for callback in self._observers:
             callback(self._var)
 
@@ -40,3 +42,10 @@ class Observable(object):
 
     def bind(self, callback):
         self._observers.append(callback)
+
+    def unbind(self, callback):
+        try:
+            index = self._observers.index(callback)
+            self._observers.pop(index)
+        except ValueError:
+            pass

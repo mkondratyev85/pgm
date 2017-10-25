@@ -47,6 +47,7 @@ class View(object):
         self.boundaries = boundaries
         self.moving_cells = moving_cells
 
+
         # set bindings
         self.moving_cells.bind(self.redraw_moving_cells)
 
@@ -134,27 +135,28 @@ class View(object):
         boundgroup = Tk.LabelFrame(group, text="Boundary conditions:")
         boundgroup.pack(fill=Tk.X)
 
-        leftvar = Tk.StringVar()
-        rightvar = Tk.StringVar()
-        topvar = Tk.StringVar()
-        bottomvar = Tk.StringVar()
+        self.topvar = Tk.StringVar()
+        self.bottomvar = Tk.StringVar()
+        self.leftvar = Tk.StringVar()
+        self.rightvar = Tk.StringVar()
 
-        Tk.Radiobutton(boundgroup,text="Free slip", variable=topvar, value="sleep").pack(anchor=Tk.N)
-        Tk.Radiobutton(boundgroup,text="No free slip", variable=topvar, value="nosleep").pack(anchor=Tk.N)
 
-        Tk.Radiobutton(boundgroup,text="Free slip", variable=leftvar, value="sleep").pack(anchor=Tk.W)
-        Tk.Radiobutton(boundgroup,text="No free slip", variable=leftvar, value="nosleep").pack(anchor=Tk.W)
+        Tk.Radiobutton(boundgroup,text="Free slip", variable=self.topvar, value="sleep").pack(anchor=Tk.N)
+        Tk.Radiobutton(boundgroup,text="No free slip", variable=self.topvar, value="nosleep").pack(anchor=Tk.N)
 
-        Tk.Radiobutton(boundgroup,text="Free slip", variable=rightvar, value="sleep").pack(anchor=Tk.E)
-        Tk.Radiobutton(boundgroup,text="No free slip", variable=rightvar, value="nosleep").pack(anchor=Tk.E)
+        Tk.Radiobutton(boundgroup,text="Free slip", variable=self.leftvar, value="sleep").pack(anchor=Tk.W)
+        Tk.Radiobutton(boundgroup,text="No free slip", variable=self.leftvar, value="nosleep").pack(anchor=Tk.W)
 
-        Tk.Radiobutton(boundgroup,text="Free slip", variable=bottomvar, value="sleep").pack(anchor=Tk.S)
-        Tk.Radiobutton(boundgroup,text="No free slip", variable=bottomvar, value="nosleep").pack(anchor=Tk.S)
+        Tk.Radiobutton(boundgroup,text="Free slip", variable=self.rightvar, value="sleep").pack(anchor=Tk.E)
+        Tk.Radiobutton(boundgroup,text="No free slip", variable=self.rightvar, value="nosleep").pack(anchor=Tk.E)
 
-        leftvar.set("sleep")
-        rightvar.set("sleep")
-        topvar.set("sleep")
-        bottomvar.set("sleep")
+        Tk.Radiobutton(boundgroup,text="Free slip", variable=self.bottomvar, value="sleep").pack(anchor=Tk.S)
+        Tk.Radiobutton(boundgroup,text="No free slip", variable=self.bottomvar, value="nosleep").pack(anchor=Tk.S)
+
+        self.topvar.trace('w', self.update_boundaries_from_inside)
+        self.bottomvar.trace('w', self.update_boundaries_from_inside)
+        self.leftvar.trace('w', self.update_boundaries_from_inside)
+        self.rightvar.trace('w', self.update_boundaries_from_inside)
 
         # create moving points list
 
@@ -173,6 +175,23 @@ class View(object):
         fig.canvas.mpl_connect('button_press_event', self.canvas_click_callback)
 
         self.fig = fig
+
+
+    def update_boundaries_from_inside(self, *args):
+        print (self.bottomvar.get())
+    #     # self.boundaries.unbind(self.update_boundaries_from_outside)
+    #     self.boundaries['top_bound'] = self.topvar.get()
+    #     self.boundaries['bottom_bound'] = self.bottomvar.get()
+    #     self.boundaries['left_bound'] = self.leftvar.get()
+    #     self.boundaries['right_bound'] = self.rightvar.get()
+    #     # self.boundaries.bind(self.update_boundaries_from_outside)
+    #     print('update radio')
+
+    def update_boundaries_from_outside(self, boundaries, *args):
+        self.bottomvar.set(boundaries['bottom_bound'])
+        self.topvar.set(boundaries['top_bound'])
+        self.leftvar.set(boundaries['left_bound'])
+        self.rightvar.set(boundaries['right_bound'])
 
     def add_mp(self, *args):
         if self.selected_cell is None:

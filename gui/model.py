@@ -26,10 +26,10 @@ class Model(object):
                   "mu_list" : '%s' % mu_list,
                   "C_list" : '%s' % C_list,
                   "sinphi_list" : '%s' % sinphi_list,
-                  "top" : self.boundaries['topvar'],
-                  "bottom" : self.boundaries['bottomvar'],
-                  "left" : self.boundaries['leftvar'],
-                  "right" : self.boundaries['rightvar'],
+                  "top" : self.boundaries['top_bound'],
+                  "bottom" : self.boundaries['bottom_bound'],
+                  "left" : self.boundaries['left_bound'],
+                  "right" : self.boundaries['right_bound'],
                   'moving_cells' : self.moving_cells,
                   "p":"{",
                   "p2":"}"
@@ -37,7 +37,6 @@ class Model(object):
         with  open(f'{fname}.py' ,'w') as myfile:
               myfile.write(template.format(**context))
         np.save("%s" % (fname), self.array)
-        print(materials.get())
         with open(f'{fname}.pickle', 'wb') as f:
             pickle.dump(materials.get(), f)
             pickle.dump(self.boundaries.get(), f)
