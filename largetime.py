@@ -61,7 +61,13 @@ class Time(object):
                 continue
             f = self._units[unit]
             t = self._sec /f(1)
-            if len(str(int(t)))>3:
+            try:
+                if len(str(int(t)))>3:
+                    continue
+            except ValueError:
+                t = "N"
                 continue
             break
+        if t == "N":
+            return 'inf '
         return f"{t:4.7} {unit}"
