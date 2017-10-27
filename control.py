@@ -86,8 +86,6 @@ def load_settings(fname):
     sys.path.pop()
     return imported.config
 
-
-
 def load_image(fname, i_res, j_res, marker_density, moving_cells):
     image = np.load(f'{fname}.npy')
     image_i, image_j = image.shape
@@ -128,7 +126,9 @@ def load_image(fname, i_res, j_res, marker_density, moving_cells):
             _, (Vx, Vy) = moving_cells[idx_]
             moving_cells_index_list.append((idx, Vx, Vy))
 
-    moving_cells_index_list = [ random.choice(moving_cells_index_list) for _ in range(10)]
+    if moving_cells_index_list:
+        moving_cells_index_list = [random.choice(moving_cells_index_list)
+                                                     for _ in range(10)]
 
     values = values.astype(int)
 
@@ -168,7 +168,6 @@ def load_model(fname, i_res=None, j_res=None, pdensity=None):
     m_e_xy = np.zeros(np.shape(mxx))
     m_P    = np.zeros(np.shape(mxx))
 
-    print(boundaries)
     top_bound = boundaries['top_bound']
     bottom_bound = boundaries['bottom_bound']
     left_bound = boundaries['left_bound']
