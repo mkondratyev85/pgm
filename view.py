@@ -87,7 +87,7 @@ class Matplot(object):
         size = min(self.figsize)/m_cat.size*5000
         if title:
             plt.title(title, fontsize=15)
-        plt.scatter(mxx,myy,c=m_cat,s=size,edgecolors='face',cmap='Blues')
+        plt.scatter(mxx,myy,c=m_cat,s=size,edgecolors='face',cmap='winter')
         #plt.colorbar()
         if len(markers_index_list) > 0:
             plt.scatter(mxx[markers_index_list],myy[markers_index_list],s=5*size,edgecolors='face',color='Red')
