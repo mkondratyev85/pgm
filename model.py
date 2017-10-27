@@ -22,7 +22,7 @@ class Model(object):
                    'i_res' : None,
                    'gx_0' : None,
                    'gy_0' : None,
-                   'p0cell' : None,
+                   'p0cell' : 0,
                    'right_bound' : None,
                    'left_bound' : None,
                    'top_bound' : None,
@@ -183,16 +183,6 @@ class Model(object):
                         gx_0, gy_0 = self.gx_0, self.gy_0
 
                         Vbound = {}
-                        # for i,cat in enumerate(m_cat):
-                        #     if i == 0:
-                        #         continue
-                        #     x,y = mxx[i][0], myy[i][0]
-                        #     i,j = int(round(y)), int(round(x))
-                        #     # i,j = int(round(y)), int(round(x))
-                        #     Vbound[(i,j)] = [10**-17,0]
-
-                        Vx_, Vy_ = np.zeros((i_res, j_res)), np.zeros((i_res, j_res))
-
 
                         for index, Vx, Vy in self.moving_points_index_list:
                             x,y = mxx[index][0], myy[index][0]
@@ -201,22 +191,6 @@ class Model(object):
                             Vx *= self.velocity_multiplier
                             Vy *= self.velocity_multiplier
                             Vbound[(i,j)] = [Vx,Vy]
-                            Vx_[i,j] = 1
-                            Vy_[i,j] = 1
-                        #
-                        # plt.subplot(1,3,1)
-                        # plt.imshow(Vx_)
-                        # plt.subplot(1,3,2)
-                        # plt.imshow(Vy_)
-                        # plt.subplot(1,3,3)
-                        # plt.imshow(eta_n)
-                        # plt.show()
-
-                        # print (gy_0)
-                        # #plt.imshow(eta_n)
-                        # plt.scatter(mxx, myy, c=m_eta)
-                        # plt.show()
-                        # print(eta_n)
 
                         Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy,
                                         eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell,
@@ -335,6 +309,7 @@ class Model(object):
                               'moving_points_index_list' : self.moving_points_index_list,
                              }
                 yield parameters
+
     def interpolate_stress_changes(self, mxx, myy, m_s_xx, m_s_xy, s_xx=None, s_xy=None, ds_xx=None, ds_xy=None, dt=None ):
         if self.stress_changes == 'simple':
             m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)

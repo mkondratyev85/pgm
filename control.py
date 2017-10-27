@@ -1,30 +1,33 @@
-import numpy as np
+import sys, os, importlib
+import subprocess
 import pickle
+import random
+
+import numpy as np
 import matplotlib.pylab as plt
 from scipy import sparse
-import subprocess
 
 from view import Matplot
 from model import Model
 
-import random
 
 average = lambda x: (x[:-1,:-1] + x[1:,:-1] +x[1:,1:] +x[:-1,1:])/4.0
 
 class PGM:
-    def __init__(self, width, height, j_res, i_res, gx_0, gy_0, model_prop, T = None, Step = None, p0cell=0,figname=''):
-        self.height, self.width  = int(width), int(height)
-        self.j_res, self.i_res = int(j_res), int(i_res)
+    #def __init__(self, width, height, j_res, i_res, gx_0, gy_0, model_prop, T = None, Step = None, p0cell=0,figname=''):
+    def __init__(self, model_prop, T = None, Step = None, figname=''):
+        self.height, self.width  = int(model_prop['width']), int(model_prop['height'])
+        self.j_res, self.i_res = int(model_prop['j_res']), int(model_prop['i_res'])
         self.dx = self.width / (self.j_res-1)
         self.dy = self.height /( self.i_res-1)
         self.dx2, self.dy2 = self.dx**2, self.dy**2
 
-        self.gx_0, self.gy_0 = gx_0, gy_0
-        self.p0cell  =  p0cell # Pressure condition in one cell (i==1 && j==2)
+        self.gx_0, self.gy_0 = model_prop['gx_0'], model_prop['gy_0']
+        self.p0cell  =  model_prop['p0cell'] # Pressure condition in one cell (i==1 && j==2)
 
         # define grid for messing with indexes
-        self.j      = np.linspace(0,j_res-1,j_res).astype('int')
-        self.i      = np.linspace(0,i_res-1,i_res).astype('int')
+        self.j      = np.linspace(0,self.j_res-1,self.j_res).astype('int')
+        self.i      = np.linspace(0,self.i_res-1,self.i_res).astype('int')
         self.jj,self.ii  = np.meshgrid(self.j,self.i)
 
         self.mxx = model_prop["mxx"]
@@ -55,8 +58,8 @@ class PGM:
         self.figname=figname
         self.view = Matplot(width = self.width,
                             height = self.height,
-                            i_res = i_res,
-                            j_res = j_res,
+                            i_res = self.i_res,
+                            j_res = self.j_res,
                             dx = self.dx,
                             dy = self.dy,
                             git = self.label,
@@ -75,6 +78,14 @@ class PGM:
                 # if iteration['step'] % 5:
                 #     continue
                 self.view.plot12(iteration)
+
+def load_settings(fname):
+    sys.path.append(os.path.dirname(fname))
+    mname = os.path.splitext(os.path.basename(fname))[0]
+    imported = importlib.import_module(mname)
+    sys.path.pop()
+    return imported.config
+
 
 
 def load_image(fname, i_res, j_res, marker_density, moving_cells):
@@ -99,72 +110,6 @@ def load_image(fname, i_res, j_res, marker_density, moving_cells):
                 mxx.append(x+np.random.uniform(.5,1,1))
                 myy.append(y+np.random.uniform(0,.5,1))
 
-            # # add special moving particle
-            # x_ = round((image_j/j_res)*x - .5)
-            # y_ = round((image_i/i_res)*y - .5)
-            # # x_ = round(x_)
-            # # y_ = round(y_)
-            # # print(x_, y_)
-            #
-            # if (x_,y_) in moving_cells_coordinates_list:
-            #     index = moving_cells_coordinates_list.index((x_,y_))
-            #     _, (Vx, Vy) = moving_cells[index]
-            #     mxx.append(np.asarray([x-.5]))
-            #     myy.append(np.asarray([y-.5]))
-            #     # print (mxx[-2:-1])
-            #     # print (myy[-2:-1])
-            #     index = len(mxx) -1
-            #     moving_cells_index_list.append((index, Vx, Vy))
-            #     # print(index)
-    # plt.scatter(mxx,myy,s=1)
-    # plt.show()
-
-    # def get_points_around():
-    #     points = []
-    #     for point_x, point_y in zip(mxx,myy):
-    #         point_x_ = int((point_x[0]))
-    #         point_y_ = int((point_y[0]))
-    #         if (point_x_, point_y_) == (x,y):
-    #             points.append((np.array(point_x),np.array(point_y)))
-    #     return points
-    #
-    def plotVelocities():
-        Vx_, Vy_ = np.zeros((j_res, i_res)), np.zeros((j_res, i_res))
-        for index, Vx, Vy in moving_cells_index_list:
-            x,y = mxx[index][0], myy[index][0]
-            i,j = int(y), int(x)
-            Vx_[i,j] = 1
-            Vy_[i,j] = 1
-
-        plt.subplot(1,2,1)
-        plt.imshow(Vx_)
-        plt.subplot(1,2,2)
-        plt.imshow(Vy_)
-        plt.show()
-
-
-    # for (x,y),(Vx,Vy) in moving_cells:
-    #     points = get_points_around()#(mxx, myy), (x,y), (j_res, i_res))
-    #     point = random.choice(points)
-    #     points_ = list(zip(mxx,myy))
-    #     index = points_.index(point)
-    #     moving_cells_index_list.append((index, Vx, Vy))
-
-
-        # x_ = ((x+.5) / image_j) * (j_res)
-        # y_ = ((y+.5) / image_i) * (i_res)
-        # print (x, image_j, j_res, x_)
-        # mxx.append(np.asarray([x_]))
-        # myy.append(np.asarray([y_]))
-        # index = len(mxx) -1
-        # moving_cells_index_list.append((index, Vx, Vy))
-
-    # plotVelocities()
-
-    # print (moving_cells_index_list)
-
-
-
     mxx = np.asarray(mxx)
     myy = np.asarray(myy)
 
@@ -185,10 +130,7 @@ def load_image(fname, i_res, j_res, marker_density, moving_cells):
 
     moving_cells_index_list = [ random.choice(moving_cells_index_list) for _ in range(10)]
 
-    # plotVelocities()
-
     values = values.astype(int)
-
 
     return mxx, myy, values, moving_cells_index_list
 
@@ -199,7 +141,11 @@ def load_model_properties(fname):
         moving_cells = pickle.load(f)
     return materials, boundaries, moving_cells
 
-def load_model(fname, i_res, j_res, pdensity):
+def load_model(fname, i_res=None, j_res=None, pdensity=None):
+    model_prop = load_settings(fname)
+    i_res, j_res = model_prop['i_res'], model_prop['j_res']
+    pdensity = model_prop['pdensity']
+
     materials, boundaries, moving_cells  = load_model_properties(fname)
     mxx, myy, values, moving_cells_index_list = load_image(fname, i_res, j_res, pdensity, moving_cells)
 
@@ -228,7 +174,7 @@ def load_model(fname, i_res, j_res, pdensity):
     left_bound = boundaries['left_bound']
     right_bound = boundaries['right_bound']
 
-    model_prop = {
+    model_prop2 = {
                   "mxx": mxx,
                   "myy": myy,
                   "m_cat": m_cat,
@@ -252,5 +198,6 @@ def load_model(fname, i_res, j_res, pdensity):
                   'moving_points_index_list' : moving_cells_index_list,
                   'markers_index_list' : [ index for index, Vx, Vy in moving_cells_index_list]
                   }
+    model_prop.update(model_prop2)
 
     return model_prop
