@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import sparse
+import random
 
 from Stokeselvis import return_sparse_matrix_Stokes
 from interpolate import interpolate, interpolate2m, interpolate_harmonic, fill_nans
@@ -32,6 +33,7 @@ class Model(object):
                    'subgrid_relaxation' : .5,
                    'advect_scheme' : 'simple',
                    #'advect_scheme' : 'Runge-Kutta 2nd order',
+                   'velocity_multiplier' : 10**-7,
 
         }
         self.markers = {'mxx' : None,
@@ -142,17 +144,20 @@ class Model(object):
                                 m_s_xy[ym]     = m_s_xy[ym]*m_s_ii_yield[ym]/m_s_ii_old[ym]
 
                         # eta_min < eta < eta_max
-                        m_eta[m_eta<eta_min] = eta_min
-                        m_eta[m_eta>eta_max] = eta_max
+                        # m_eta[m_eta<eta_min] = eta_min
+                        # m_eta[m_eta>eta_max] = eta_max
 
 
-                        # we should interpolate eta_n separately but actually eta_n and eta_s are equal
                         eta_s, rho, so_xy = interpolate(mxx,myy,i_res,j_res, (m_eta, m_rho, m_s_xy))
                         eta_n, so_xx = interpolate(mxx+.5,myy+.5,i_res,j_res, (m_eta, m_s_xx))
                         mu_s = interpolate_harmonic(mxx,myy,i_res,j_res, m_mu )
                         mu_n = interpolate_harmonic(mxx+.5,myy+.5,i_res,j_res, m_mu )
                         eta_n = interpolate_harmonic(mxx+.5,myy+.5,i_res,j_res, m_eta )
                         eta_s = interpolate_harmonic(mxx,myy,i_res,j_res, m_eta )
+
+                        # rho = interpolate_harmonic(mxx,myy,i_res,j_res, m_rho )
+                        # so_xy = interpolate_harmonic(mxx,myy,i_res,j_res, m_s_xx )
+                        # so_xx = interpolate_harmonic(mxx+.5,myy+.5,i_res,j_res, m_s_xx )
 
                         #Check if we have nans
                         if np.isnan(eta_s).any(): fill_nans(eta_s)
@@ -178,12 +183,40 @@ class Model(object):
                         gx_0, gy_0 = self.gx_0, self.gy_0
 
                         Vbound = {}
+                        # for i,cat in enumerate(m_cat):
+                        #     if i == 0:
+                        #         continue
+                        #     x,y = mxx[i][0], myy[i][0]
+                        #     i,j = int(round(y)), int(round(x))
+                        #     # i,j = int(round(y)), int(round(x))
+                        #     Vbound[(i,j)] = [10**-17,0]
+
+                        Vx_, Vy_ = np.zeros((i_res, j_res)), np.zeros((i_res, j_res))
+
+
                         for index, Vx, Vy in self.moving_points_index_list:
                             x,y = mxx[index][0], myy[index][0]
-                            i,j = int(round(y)), int(round(x))
+                            # i,j = int(round(y)), int(round(x))
+                            i,j = int(y), int(x)
+                            Vx *= self.velocity_multiplier
+                            Vy *= self.velocity_multiplier
                             Vbound[(i,j)] = [Vx,Vy]
-                            print (i,j, Vx, Vy)
+                            Vx_[i,j] = 1
+                            Vy_[i,j] = 1
+                        #
+                        # plt.subplot(1,3,1)
+                        # plt.imshow(Vx_)
+                        # plt.subplot(1,3,2)
+                        # plt.imshow(Vy_)
+                        # plt.subplot(1,3,3)
+                        # plt.imshow(eta_n)
+                        # plt.show()
 
+                        # print (gy_0)
+                        # #plt.imshow(eta_n)
+                        # plt.scatter(mxx, myy, c=m_eta)
+                        # plt.show()
+                        # print(eta_n)
 
                         Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy,
                                         eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell,
@@ -195,7 +228,6 @@ class Model(object):
                         P  = Stokes_solve[::3].reshape((i_res),(j_res))
                         Vx = Stokes_solve[1::3].reshape((i_res),(j_res))
                         Vy = Stokes_solve[2::3].reshape((i_res),(j_res))
-                        # print (Vx, Vy)
 
                         P *= kcont
 

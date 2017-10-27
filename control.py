@@ -7,6 +7,8 @@ import subprocess
 from view import Matplot
 from model import Model
 
+import random
+
 average = lambda x: (x[:-1,:-1] + x[1:,:-1] +x[1:,1:] +x[:-1,1:])/4.0
 
 class PGM:
@@ -70,8 +72,8 @@ class PGM:
                 if iteration['step']>50:
                     self.model.gx_0 = 0
                     self.model.gy_0 = 0
-                if iteration['step'] % 10:
-                    continue
+                # if iteration['step'] % 5:
+                #     continue
                 self.view.plot12(iteration)
 
 
@@ -82,37 +84,92 @@ def load_image(fname, i_res, j_res, marker_density, moving_cells):
     # markers
     mxx = []
     myy = []
-    moving_cells_index_list = []
-    moving_cells_coordinates_list = [(xy) for xy, VxVy in moving_cells]
-    print(moving_cells)
-    for x in range((j_res-1)*2):
-        for y in range((i_res-1)*2):
+    for x in range(j_res-1):
+        for y in range(i_res-1):
             for _ in range(marker_density):
-                mxx.append((x+np.random.uniform(0,1,1))/2.0)
-                myy.append((y+np.random.uniform(0,1,1))/2.0)
+                mxx.append(x+np.random.uniform(0,.5,1))
+                myy.append(y+np.random.uniform(0,.5,1))
+
+                mxx.append(x+np.random.uniform(0,.5,1))
+                myy.append(y+np.random.uniform(.5,1,1))
+
+                mxx.append(x+np.random.uniform(.5,1,1))
+                myy.append(y+np.random.uniform(.5,1,1))
+
+                mxx.append(x+np.random.uniform(.5,1,1))
+                myy.append(y+np.random.uniform(0,.5,1))
+
             # # add special moving particle
-            # if (x,y) in moving_cells_coordinates_list:
-            #     index = moving_cells_coordinates_list.index((x,y))
+            # x_ = round((image_j/j_res)*x - .5)
+            # y_ = round((image_i/i_res)*y - .5)
+            # # x_ = round(x_)
+            # # y_ = round(y_)
+            # # print(x_, y_)
+            #
+            # if (x_,y_) in moving_cells_coordinates_list:
+            #     index = moving_cells_coordinates_list.index((x_,y_))
             #     _, (Vx, Vy) = moving_cells[index]
-            #     mxx.append(np.asarray([x]))
-            #     myy.append(np.asarray([y]))
-            #     print (mxx[-2:-1])
-            #     print (myy[-2:-1])
+            #     mxx.append(np.asarray([x-.5]))
+            #     myy.append(np.asarray([y-.5]))
+            #     # print (mxx[-2:-1])
+            #     # print (myy[-2:-1])
             #     index = len(mxx) -1
             #     moving_cells_index_list.append((index, Vx, Vy))
-            #     print(index)
-    for (x,y),(Vx,Vy) in moving_cells:
-        x_ = ((x+.5) / image_j) * (j_res)
-        y_ = ((y+.5) / image_i) * (i_res)
-        print (x, image_j, j_res, x_)
-        mxx.append(np.asarray([x_]))
-        myy.append(np.asarray([y_]))
-        index = len(mxx) -1
-        moving_cells_index_list.append((index, Vx, Vy))
+            #     # print(index)
+    # plt.scatter(mxx,myy,s=1)
+    # plt.show()
+
+    # def get_points_around():
+    #     points = []
+    #     for point_x, point_y in zip(mxx,myy):
+    #         point_x_ = int((point_x[0]))
+    #         point_y_ = int((point_y[0]))
+    #         if (point_x_, point_y_) == (x,y):
+    #             points.append((np.array(point_x),np.array(point_y)))
+    #     return points
+    #
+    def plotVelocities():
+        Vx_, Vy_ = np.zeros((j_res, i_res)), np.zeros((j_res, i_res))
+        for index, Vx, Vy in moving_cells_index_list:
+            x,y = mxx[index][0], myy[index][0]
+            i,j = int(y), int(x)
+            Vx_[i,j] = 1
+            Vy_[i,j] = 1
+
+        plt.subplot(1,2,1)
+        plt.imshow(Vx_)
+        plt.subplot(1,2,2)
+        plt.imshow(Vy_)
+        plt.show()
+
+
+    # for (x,y),(Vx,Vy) in moving_cells:
+    #     points = get_points_around()#(mxx, myy), (x,y), (j_res, i_res))
+    #     point = random.choice(points)
+    #     points_ = list(zip(mxx,myy))
+    #     index = points_.index(point)
+    #     moving_cells_index_list.append((index, Vx, Vy))
+
+
+        # x_ = ((x+.5) / image_j) * (j_res)
+        # y_ = ((y+.5) / image_i) * (i_res)
+        # print (x, image_j, j_res, x_)
+        # mxx.append(np.asarray([x_]))
+        # myy.append(np.asarray([y_]))
+        # index = len(mxx) -1
+        # moving_cells_index_list.append((index, Vx, Vy))
+
+    # plotVelocities()
+
+    # print (moving_cells_index_list)
+
 
 
     mxx = np.asarray(mxx)
     myy = np.asarray(myy)
+
+    moving_cells_index_list = []
+    moving_cells_coordinates_list = [(xy) for xy, VxVy in moving_cells]
 
     # TODO: Refactor following block to be inside previous cascade of for loops
     mj = (mxx*image_j/(j_res-1)).astype(int)
@@ -121,7 +178,17 @@ def load_image(fname, i_res, j_res, marker_density, moving_cells):
     for idx in range(len(mxx)):
         j,i = mj[idx], mi[idx]
         values[idx] = image[i,j]
+        if (j,i) in moving_cells_coordinates_list:
+            idx_ = moving_cells_coordinates_list.index((j,i))
+            _, (Vx, Vy) = moving_cells[idx_]
+            moving_cells_index_list.append((idx, Vx, Vy))
+
+    moving_cells_index_list = [ random.choice(moving_cells_index_list) for _ in range(10)]
+
+    # plotVelocities()
+
     values = values.astype(int)
+
 
     return mxx, myy, values, moving_cells_index_list
 
