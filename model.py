@@ -27,12 +27,9 @@ class Model(object):
                    'left_bound' : None,
                    'top_bound' : None,
                    'bottom_bound' : None,
-                   'stress_changes' : 'simple',
-                   #'stress_changes' : '2nd order',
-                   #'stress_changes' : 'subgrid',
+                   'stress_changes' : 'simple', # '2nd order', 'subgird'
                    'subgrid_relaxation' : .5,
-                   'advect_scheme' : 'simple',
-                   #'advect_scheme' : 'Runge-Kutta 2nd order',
+                   'advect_scheme' : 'simple', # 'Runge-Kutta 2nd order'
                    'velocity_multiplier' : 10**-7,
 
         }
@@ -49,17 +46,13 @@ class Model(object):
                         'm_e_xx' : None,
                         'm_e_xy' : None,
                         'm_P' : None,
-                        # 'markers_index_list' : [100,6000, 3000],
-                        'markers_index_list' : [],
-                        'moving_points_index_list' : [],
-                        # 'moving_points_index_list' : [(100, 0, 0),
-                        #                               (6000,0,-1*10-3),
-                        #                               (3000,0,-1*10-7)]
+                        'markers_index_list' : None,
+                        'moving_points_index_list' : None,
                        }
 
         self.__dict__.update(defaults)
         self.__dict__.update(self.markers)
-        self.__dict__.update(parameters)
+        self.__dict__.update(parameters.settings)
 
         for key in self.__dict__:
             if self.__dict__[key] is None:
