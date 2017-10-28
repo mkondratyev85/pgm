@@ -7,5 +7,5 @@ settings = {'width' :  1_000 * 1_000,
             'p0cell' : 0,
             'pdensity': 5,
             'MaxT' : '10 Myr',
-            'plot_step_interval' : 5,
+            'plot_step_interval' : 0,
 }

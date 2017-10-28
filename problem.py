@@ -6,28 +6,10 @@ import numpy as np
 import random
 
 class Problem(object):
+    
+    settings = {}
 
     def __init__(self, default_settings_filename = None):
-        self.settings = {}
-        # self.view_settings = {
-        #                        'figsize' : None,
-        #                        'git' : None,
-        #                        'figpath' : None,
-        # }
-        # self.model_settings = {
-        #                        'width' : None,
-        #                        'height' : None,
-        #                        'j_res' : None,
-        #                        'i_res' : None,
-        #                        'dx' : None,
-        #                        'dy' : None,
-        #                        'p0cell' : None,
-        #                        'pdensity': None,
-        # }
-        # self.control_settings = {
-        #                        'MaxT' : None,
-        #                        'plot_step_interval' : None,
-        # }
 
         # set defaults
         if default_settings_filename:
