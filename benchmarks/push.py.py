@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def load_model(i_res, j_res, marker_density):
-	image = np.load("/tmp/t4.py.npy")
+	image = np.load("/home/fatune/pgm/benchmarks/push.py.npy")
 	image_i, image_j = image.shape
 
 	# markers
@@ -27,7 +27,7 @@ def load_model(i_res, j_res, marker_density):
 	values = values.astype(int)
 
 	rho_key = np.array([2520, 1560, 1])
-	eta_key = np.array([1000000000000, 1000000000, 100])
+	eta_key = np.array([10000000000000000000000, 1000000000, 100])
 	mu_key = np.array([10000000000000000, 1000000, 1000000])
 	C_key = np.array([10, 10, 10])
 	sinphi_key = np.array([0, 0.58778525229247314, 0])
