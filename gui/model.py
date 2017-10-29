@@ -1,3 +1,7 @@
+import sys
+import importlib
+import os
+
 import numpy as np
 from matplotlib import pylab as plt
 import pickle
@@ -13,7 +17,49 @@ class Model(object):
         self.boundaries = boundaries
         self.moving_cells = moving_cells
 
+    def save_to_file2(self, filename):
+        with open(f'{filename}', 'w') as myfile:
+            # write materials
+            myfile.write('materials = [\n')
+            for material in self.materials:
+                myfile.write(f'    {material},\n')
+            myfile.write(']\n\n')
+
+            # write boundaries
+            myfile.write('boundaries = {\n')
+            for boundary in self.boundaries:
+                myfile.write(f"    '{boundary}' : '{self.boundaries[boundary]}',\n")
+            myfile.write('}\n\n')
+
+            # write cells
+            myfile.write('moving_cells = [\n')
+            for cell in self.moving_cells:
+                myfile.write(f'    {cell},\n')
+            myfile.write(']\n\n')
+
+        # save array
+        np.save("%s" % (filename[:-3]), self.array)
+
+        self.open_file2(filename)
+
+    def open_file2(self, filename):
+        print(filename)
+        sys.path.append(os.path.dirname(f'{filename}.py'))
+        modulename = os.path.splitext(os.path.basename(filename))[0]
+        imported = importlib.import_module(modulename)
+        sys.path.pop()
+
+        array = np.load(f'{filename}.npy')
+        self.materials.set(imported.materials)
+        self.boundaries.set(imported.boundaries)
+        self.moving_cells.set(imported.moving_cells)
+        self.array.set(array)
+
+
     def save_to_file(self, fname):
+        self.save_to_file2(fname)
+        return
+
         materials = self.materials
         rho_list = [material['rho'] for  material in materials]
         eta_list = [material['eta'] for  material in materials]
@@ -43,6 +89,8 @@ class Model(object):
             pickle.dump(self.moving_cells.get(), f)
 
     def load_from_file(self, fname):
+        self.open_file2(fname)
+        return
         with open(f'{fname}.pickle', 'rb') as f:
             materials = pickle.load(f)
             boundaries = pickle.load(f)
