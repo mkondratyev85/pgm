@@ -9,5 +9,5 @@ materials = {
     "viso-elastic slab": {"mu": 10**10, "rho": 4000, "eta": 10**27, "C": 10, "sinphi": np.sin(np.radians(36))},
     "viso-elastic medium": {"mu": 10**20, "rho": 1, "eta": 10**24, "C": 10, "sinphi": np.sin(np.radians(36))},
     "sticky air": {"mu": 10**6, "rho": 1, "eta": 10**2, "C": 10, "sinphi": 0},
-    "mobile wall": {"mu": 10**16, "rho": 2520, "eta": 10**12, "C": 10, "sinphi": 0},
+    "mobile wall": {"mu": 10**16, "rho": 2520, "eta": 10**22, "C": 10, "sinphi": 0},
 }

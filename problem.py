@@ -6,7 +6,7 @@ import numpy as np
 import random
 
 class Problem(object):
-    
+
     settings = {}
 
     def __init__(self, default_settings_filename = None):
@@ -18,16 +18,20 @@ class Problem(object):
     def __getitem__(self, index):
         return self.settings[index]
 
-    def load_settings_from_file(self, filename):
+    def load_from_file(self, filename):
         sys.path.append(os.path.dirname(filename))
         modulename = os.path.splitext(os.path.basename(filename))[0]
         imported = importlib.import_module(modulename)
         sys.path.pop()
 
         settings = imported.settings
+        materials = imported.materials
+        boundaries = imported.boundaries
+        moving_cells = imported.moving_cells
 
         self.set_settings_from_dictionary(settings=settings,
                                           check_for_None=False)
+        return materials, boundaries, moving_cells
 
     def set_settings_from_dictionary(self,
                                      settings=None,
@@ -35,22 +39,9 @@ class Problem(object):
 
         self.settings.update(settings)
 
-        # if not check_for_None:
-        #     return
-        #
-        # for key in self.settings:
-        #     if attr[key] is None:
-        #         raise ValueError (f'{key} parameter must be set')
-
-    def load_problem_description(self, filename):
-        with open(f'{filename}.pickle', 'rb') as f:
-            materials = pickle.load(f)
-            boundaries = pickle.load(f)
-            moving_cells = pickle.load(f)
-        return materials, boundaries, moving_cells
-
     def load_model(self, filename):
-        materials, boundaries, moving_cells  = self.load_problem_description(filename)
+        # materials, boundaries, moving_cells  = self.load_problem_description(filename)
+        materials, boundaries, moving_cells  = self.load_from_file(filename)
         mxx, myy, values, moving_cells_index_list = self.load_image(filename, moving_cells)
 
         rho_key = np.asarray([material['rho'] for  material in materials])
@@ -98,7 +89,7 @@ class Problem(object):
         self.settings['markers_index_list'] = [ index for index, Vx, Vy in moving_cells_index_list]
 
     def load_image(self, fname, moving_cells):
-        image = np.load(f'{fname}.npy')
+        image = np.load(f'{fname[:-3]}.npy')
         image_i, image_j = image.shape
 
         j_res = self['j_res']
@@ -143,7 +134,7 @@ class Problem(object):
 
         if moving_cells_index_list:
             moving_cells_index_list = [random.choice(moving_cells_index_list)
-                                                         for _ in range(10)]
+                                                         for _ in range(5)]
 
         values = values.astype(int)
 

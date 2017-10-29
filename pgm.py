@@ -11,7 +11,6 @@ def main():
     args = parser.parse_args()
 
     problem = Problem()
-    problem.load_settings_from_file(args.model)
     problem.load_model(args.model)
 
     control = PGM(problem, figname = args.output)
