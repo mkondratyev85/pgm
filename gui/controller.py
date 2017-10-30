@@ -26,6 +26,10 @@ class Controller(object):
         self.materials.bind(self.View.update_lb_materials)
         self.moving_cells.bind(self.View.update_moving_cells_list)
         # self.boundaries.bind(self.View.update_boundaries_from_outside)
+        self.boundaries["left_bound"] = 'sleep'
+        self.boundaries["top_bound"] = 'sleep'
+        self.boundaries["right_bound"] = 'sleep'
+        self.boundaries["bottom_bound"] = 'sleep'
 
     def run(self):
         self.View.main_loop()
