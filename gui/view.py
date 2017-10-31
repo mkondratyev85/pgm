@@ -241,7 +241,8 @@ class View(object):
 
     def canvas_click_callback(self, event, xy = None):
         if xy is None:
-            x, y = int(round(event.xdata)), int(round(event.ydata))
+            # x, y = int(round(event.xdata)), int(round(event.ydata))
+            x, y = event.xdata, event.ydata
         else:
             x, y = xy
 
@@ -253,7 +254,9 @@ class View(object):
 
         if self.selected_cell is None:
             self.selected_cell =  x, y
-            self.selected_circle = plt.Circle((x, y), .1, color='orange')
+            size = self.fig.get_size_inches()*self.fig.dpi
+            radius = min(size)*0.02
+            self.selected_circle = plt.Circle((x, y), radius, color='orange')
             self.ax.add_artist(self.selected_circle)
         else:
             self.selected_cell =  x, y
@@ -312,9 +315,11 @@ class View(object):
 
         # add artists
         self.moving_circles = []
+        size = self.fig.get_size_inches()*self.fig.dpi
+        radius = min(size)*0.02
         for cell in self.moving_cells:
             (x,y), (Vx, Vy) = cell
-            circle = plt.Circle((x,y), .1, color='white')
+            circle = plt.Circle((x,y), radius, color='white')
             self.ax.add_artist(circle)
             self.moving_circles.append(circle)
         self.canvas.draw()
