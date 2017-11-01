@@ -43,6 +43,37 @@ class Matplot(object):
                         'default' : lambda array: array,
                         }
 
+    def plot3(self, parameters):
+        """ Make a figure and plot category, log e and P"""
+        plt.clf()
+        self.figsize=(40,10)
+        fig = plt.figure(figsize = self.figsize)
+
+        subtitle = f'Time: {parameters["T"]}, Step: {parameters["step"]} '
+
+        subtitle2 = f'model size: {self.width/1000} km x {self.height/1000} ' +\
+                    f'{self.j_res} x {self.i_res}, dx={self.dx}m, dy={self.dy}m. ' +\
+                    f'git: {self.git}'
+
+        plt.suptitle(subtitle, fontsize=25)
+
+        plt.figtext(.1, .05, subtitle2, size=15)
+
+        plt.subplot(1,3,1)
+        self._plot_strain_log(parameters)
+
+        plt.subplot(1,3,2)
+        self._plot_P(parameters)
+
+        plt.subplot(1,3,3)
+        self._plot_particals(parameters)
+
+        plt.savefig('%s/%003d-%s.png' % (self.figname,
+                                             parameters['step'],
+                                             parameters['T']))
+        plt.close(fig)
+
+
     def plot12(self, parameters):
         """ Make 12 plots on a list """
         plt.clf()
@@ -82,15 +113,22 @@ class Matplot(object):
     def _plot_particals(self, parameters, title = None):
         mxx, myy = parameters['mxx'], parameters['myy']
         markers_index_list = parameters['markers_index_list']
+        moving_points_index_list = parameters['moving_points_index_list']
+
         m_cat = parameters['m_cat']
 
-        size = min(self.figsize)/m_cat.size*5000
+        size = min(self.figsize)/m_cat.size*50000
         if title:
             plt.title(title, fontsize=15)
         plt.scatter(mxx,myy,c=m_cat,s=size,edgecolors='face',cmap='winter')
-        #plt.colorbar()
+
+        # plot markers
         if len(markers_index_list) > 0:
             plt.scatter(mxx[markers_index_list],myy[markers_index_list],s=5*size,edgecolors='face',color='Red')
+        if len(moving_points_index_list) > 0:
+            moving_points = [ index for index, VxVy in moving_points_index_list]
+            plt.scatter(mxx[moving_points],myy[moving_points],s=5*size,edgecolors='face',color='Black')
+
         plt.ylim([self.i_res-1,0])
         plt.xlim([0,self.j_res-1])
 
@@ -99,6 +137,13 @@ class Matplot(object):
         plt.title(title, fontsize=fontsize)
         sii= parameters['sii']
         plt.imshow(sii[:-1,:-1],interpolation='none',cmap='Reds')
+        plt.colorbar()
+
+    def _plot_strain_log(self, parameters, title = r"$\epsilon_{ii}$", fontsize=30):
+        plt.title(title, fontsize=fontsize)
+        eii= parameters['eii']
+        eii = np.log(eii)
+        plt.imshow(eii[:-1,:-1],interpolation='none',cmap='Reds')
         plt.colorbar()
 
     def _plot_P(self, parameters, fontsize=30):

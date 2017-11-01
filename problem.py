@@ -42,7 +42,7 @@ class Problem(object):
     def load_model(self, filename):
         # materials, boundaries, moving_cells  = self.load_problem_description(filename)
         materials, boundaries, moving_cells  = self.load_from_file(filename)
-        mxx, myy, values, moving_cells_index_list = self.load_image(filename, moving_cells)
+        mxx, myy, values, moving_cells_index_list, markers_index_list = self.load_image(filename, moving_cells)
 
         rho_key = np.asarray([material['rho'] for  material in materials])
         eta_key = np.asarray([material['eta'] for  material in materials])
@@ -86,7 +86,21 @@ class Problem(object):
         self.settings["m_e_xy"] = m_e_xy
         self.settings["m_P"] = m_P
         self.settings['moving_points_index_list'] = moving_cells_index_list
-        self.settings['markers_index_list'] = [ index for index, Vx, Vy in moving_cells_index_list]
+        #self.settings['markers_index_list'] = [ index for index, VxVy in moving_cells_index_list]
+        self.settings['markers_index_list'] = markers_index_list
+
+    def create_grid_of_points(self, mxx, myy, res):
+        x_res, y_res = res
+        x = np.linspace(0,self['j_res']-2,x_res)
+        y = np.linspace(0,self['i_res']-2,y_res)
+        xx, yy = np.meshgrid(x,y)
+        list_of_indexes = []
+        for x in xx.flatten():
+            mxx.append(np.asarray([x]))
+            list_of_indexes.append(len(mxx)-1)
+        for y in yy.flatten():
+            myy.append(np.asarray([y]))
+        return list_of_indexes
 
     def load_image(self, fname, moving_cells):
         image = np.load(f'{fname[:-3]}.npy')
@@ -114,11 +128,34 @@ class Problem(object):
                     mxx.append(x+np.random.uniform(.5,1,1))
                     myy.append(y+np.random.uniform(0,.5,1))
 
-        mxx = np.asarray(mxx)
-        myy = np.asarray(myy)
 
         moving_cells_index_list = []
         moving_cells_coordinates_list = [(xy) for xy, VxVy in moving_cells]
+        print(moving_cells_coordinates_list)
+
+        moving_x = np.asarray([x for (x,y), VxVy in moving_cells])
+        moving_y = np.asarray([y for (x,y), VxVy in moving_cells])
+
+        moving_j = (moving_x*(j_res-1)/image_j).astype(int)
+        moving_i = (moving_y*(i_res-1)/image_i).astype(int)
+
+        print(mxx)
+
+        moving_points = []
+        for ind, (j,i) in enumerate(zip(moving_j, moving_i)):
+            _, (VxVy) = moving_cells[ind]
+            # j,i = int(j), int(i)
+            mxx.append(np.asarray([j]))
+            myy.append(np.asarray([i]))
+            moving_points.append((len(mxx)-1,VxVy))
+
+        print(mxx)
+
+        markers_index_list = self.create_grid_of_points(mxx, myy, (15,15))
+
+        mxx = np.asarray(mxx)
+        myy = np.asarray(myy)
+
 
         # TODO: Refactor following block to be inside previous cascade of for loops
         mj = (mxx*image_j/(j_res-1)).astype(int)
@@ -138,4 +175,5 @@ class Problem(object):
 
         values = values.astype(int)
 
-        return mxx, myy, values, moving_cells_index_list
+
+        return mxx, myy, values, moving_points, markers_index_list

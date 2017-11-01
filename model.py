@@ -177,13 +177,19 @@ class Model(object):
 
                         Vbound = {}
 
-                        for index, Vx, Vy in self.moving_points_index_list:
+                        for index, VxVy in self.moving_points_index_list:
                             x,y = mxx[index][0], myy[index][0]
                             # i,j = int(round(y)), int(round(x))
                             i,j = int(y), int(x)
+                            # velocities defined as a function
+                            if callable(VxVy):
+                                Vx, Vy = VxVy(step=step, time=T)
+                            else:
+                                Vx, Vy = VxVy
                             Vx *= self.velocity_multiplier
                             Vy *= self.velocity_multiplier
                             Vbound[(i,j)] = [Vx,Vy]
+                        print(Vbound)
 
                         Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy,
                                         eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell,
@@ -230,6 +236,7 @@ class Model(object):
                         s_xx = (1-xelvis_n[1:,1:])*2*eta_n0[1:,1:]*e_xx + xelvis_n[1:,1:]*so_xx0[1:,1:]
                         s_xy = (1-xelvis_s)*2*eta_s0*e_xy + xelvis_s*so_xy0
                         s_ii = (s_xx**2 + average(s_xy**2))**.5
+                        e_ii = (e_xx**2 + average(e_xy**2))**.5
 
                         # ds_xx = s_xx - average(so_xx0)
                         ds_xx = s_xx - so_xx0[1:,1:]
@@ -287,6 +294,7 @@ class Model(object):
                               'myy' : myy,
                               'm_cat' : m_cat,
                               'sii' : s_ii,
+                              'eii' : e_ii,
                               'P' : P,
                               'Vx' : Vx,
                               'Vy' : Vy,
