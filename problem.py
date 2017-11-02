@@ -77,13 +77,32 @@ class Problem(object):
         x_res, y_res = res
         x = np.linspace(0,self['j_res']-2,x_res)
         y = np.linspace(0,self['i_res']-2,y_res)
+        x_ = np.linspace(0,self['j_res']-2,x_res*5)
+        y_ = np.linspace(0,self['i_res']-2,y_res*5)
         xx, yy = np.meshgrid(x,y)
+
         list_of_indexes = []
-        for x in xx.flatten():
-            mxx.append(np.asarray([x]))
-            list_of_indexes.append(len(mxx)-1)
-        for y in yy.flatten():
-            myy.append(np.asarray([y]))
+
+
+        for x1 in x[:-1]:
+            # for y1 in np.delete(y_, np.s_[:-1:5]):
+            for y1 in y_:
+                mxx.append(np.asarray([x1]))
+                myy.append(np.asarray([y1]))
+                list_of_indexes.append(len(mxx)-1)
+        for y1 in y[:-1]:
+            # for x1 in np.delete(x_, np.s_[:-1:5]):
+            for x1 in x_:
+                mxx.append(np.asarray([x1]))
+                myy.append(np.asarray([y1]))
+                list_of_indexes.append(len(mxx)-1)
+
+        # for x in xx.flatten():
+        #     mxx.append(np.asarray([x]))
+        #     list_of_indexes.append(len(mxx)-1)
+        # for y in yy.flatten():
+        #     myy.append(np.asarray([y]))
+
         return list_of_indexes
 
     def load_image(self, fname, moving_cells):
