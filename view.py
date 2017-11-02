@@ -124,10 +124,10 @@ class Matplot(object):
 
         # plot markers
         if len(markers_index_list) > 0:
-            plt.scatter(mxx[markers_index_list],myy[markers_index_list],s=5*size,edgecolors='face',color='Red')
+            plt.scatter(mxx[markers_index_list],myy[markers_index_list],s=0.5*size,edgecolors='face',color='Black')
         if len(moving_points_index_list) > 0:
             moving_points = [ index for index, VxVy in moving_points_index_list]
-            plt.scatter(mxx[moving_points],myy[moving_points],s=5*size,edgecolors='face',color='Black')
+            plt.scatter(mxx[moving_points],myy[moving_points],s=5*size,edgecolors='face',color='Red')
 
         plt.ylim([self.i_res-1,0])
         plt.xlim([0,self.j_res-1])
