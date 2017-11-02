@@ -10,6 +10,7 @@ settings = {
     'pdensity': 5,
     'MaxT' : '20 Myr',
     'plot_step_interval' : 0,
+    'markers_grid' : (15,15),
 }
 
 materials = [

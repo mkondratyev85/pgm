@@ -10,7 +10,7 @@ def main():
     parser.add_argument("output", help="directory to save outputs")
     args = parser.parse_args()
 
-    problem = Problem()
+    problem = Problem(default_settings_filename='defaults.py')
     problem.load_model(args.model)
 
     control = PGM(problem, figname = args.output)
