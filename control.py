@@ -30,12 +30,12 @@ class PGM:
         while True:
             for iteration in self.model.make_step(maxT = self.maxT):
                 print(iteration['step'])
-                # if iteration['step']>50:
-                #     self.model.gx_0 = 0
-                #     self.model.gy_0 = 0
+                if iteration['T']>Time('15 Myr'):
+                    self.model.gx_0 = 0
+                    self.model.gy_0 = 0
                 if plot_step_interval:
                     if iteration['step'] % plot_step_interval:
                         continue
-                # self.view.plot12(iteration)
+                self.view.plot12(iteration)
                 # self.view.plot3(iteration)
-                self.view.plotStokes(iteration)
+                #self.view.plotStokes(iteration)
