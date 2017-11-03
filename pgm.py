@@ -8,7 +8,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("model", help="python file with model description")
     parser.add_argument("output", help="directory to save outputs")
-    parser.add_argument("path_mp4", help="directory with set of png images produced by pgm to create mp4 video")
+    parser.add_argument("--path_mp4", help="directory with set of png images produced by pgm to create mp4 video")
     args = parser.parse_args()
 
     if args.path_mp4:

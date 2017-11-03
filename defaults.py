@@ -10,5 +10,7 @@ settings = {
     'pdensity': None,
     'MaxT' : None,
     'plot_step_interval' : None,
+    'seed' : None,
     'markers_grid' : (0,0),
+    'seed' : None,
 }

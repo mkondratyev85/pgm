@@ -113,6 +113,10 @@ class Problem(object):
         i_res = self['i_res']
         marker_density = self['pdensity']
 
+        if not self['seed'] is None:
+            print('seed')
+            np.random.seed(self['seed'])
+
         # markers
         mxx = []
         myy = []

@@ -37,4 +37,5 @@ class PGM:
                     if iteration['step'] % plot_step_interval:
                         continue
                 # self.view.plot12(iteration)
-                self.view.plot3(iteration)
+                # self.view.plot3(iteration)
+                self.view.plotStokes(iteration)

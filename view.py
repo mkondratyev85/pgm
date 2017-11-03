@@ -73,6 +73,30 @@ class Matplot(object):
                                              parameters['T']))
         plt.close(fig)
 
+    def plotStokes(self, parameters):
+        """ Create plot of grides used to produce Stokes matrix"""
+        plt.clf()
+        fig = plt.figure(figsize = (30,20))
+
+        things_to_plot = ('eta_s_', 'eta_n_', 'rho_', 'so_xx_', 'so_xy_')
+        titles =  (r'$\eta_s$', r'$\eta_n$', r'$\rho$', r'$\sigma_{xx}$', r'$\sigma_{xy}$')
+
+        for i,(array, title) in enumerate(zip(things_to_plot, titles)):
+            i+=1
+            normalize = False
+            if array in ('so_xx_','so_xy_'):
+                normalize =  False
+            plt.subplot(2,3,i)
+            self._plot_simple_w_colorbar(parameters, array, title=title, normalize=normalize)
+
+        plt.subplot(2,3,6)
+        self._plot_particals(parameters)
+
+
+        plt.savefig('%s/matrix_%003d-%s.png' % (self.figname,
+                                             parameters['step'],
+                                             parameters['T']))
+        plt.close(fig)
 
     def plot12(self, parameters):
         """ Make 12 plots on a list """
@@ -161,16 +185,27 @@ class Matplot(object):
         plt.xlim([0,self.j_res-2])
 
 
-    def _plot_simple_w_colorbar(self, parameter, array, title=None, cmap='seismic', fontsize=30):
+    def _plot_simple_w_colorbar(self, parameter, array, title=None, cmap='seismic', fontsize=30, normalize=False):
         if not title:
             title=array
         plt.title(title, fontsize=fontsize)
         A = parameter[array]
+        max_ = float(max(np.max(A), np.abs(np.min(A))))
+
         try:
             slicer = self.slices[array]
         except KeyError:
             slicer = self.slices['default']
-        plt.imshow(slicer(A),
-                   interpolation='none',
-                   cmap=cmap)
+        if normalize:
+            plt.imshow(slicer(A),
+                       interpolation='none',
+                       cmap=cmap,
+                       vmin = -1*max_,
+                       vmax = max_,
+                       )
+        else:
+            plt.imshow(slicer(A),
+                       interpolation='none',
+                       cmap=cmap,
+                       )
         plt.colorbar()
