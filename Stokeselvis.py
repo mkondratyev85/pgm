@@ -17,7 +17,7 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 
 	kbond   = 4*eta_s.min()/((dx+dy)**2)
 	kcont   = 2*eta_s.min()/(dx+dy)
-	
+
 	row = []
 	col = []
 	data = []
@@ -25,19 +25,19 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 	# define grid for messing with indexes
 	k      = np.linspace(0,(j_res*i_res-1),(j_res*i_res)).astype('int')
 	k.shape = ((i_res,j_res))
-	
+
 	vector = np.ones((3*i_res,j_res))
 	vector = vector.reshape((3*j_res*i_res,1))
 
 	P = lambda k: 3*k
 	Vx = lambda k: 3*k+1
 	Vy = lambda k: 3*k+2
-	
+
 	dx2,dy2 = dx**2, dy**2
 
 	for j in range(0,j_res):
 		for i in range(0,i_res):
-			# Continuity equation 
+			# Continuity equation
 			# Ghost pressure unknowns (i=0, j=0): P(i,j)=0
 			if i==0 or j==0:
 				add_to_sparse(P(k[i][j]),P(k[i][j]),1*kbond,row,col,data)
@@ -105,7 +105,7 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 				add_to_sparse(Vx(k[i][j]), Vx(k[i][j]), kbond ,row,col,data)
 				vector[Vx(k[i][j])] = Vbound[(i,j)][0]*kcont
 			else:
-				# Internal nodes: dSxx/dx+dSxy/dy-dP/dx=0    
+				# Internal nodes: dSxx/dx+dSxy/dy-dP/dx=0
 				# dSxx/dx=2*etan(i+1,j+1)*(vx(i,j+1)-vx(i,j))/dx^2-2*etan(i+1,j)*(vx(i,j)-vx(i,j-1))/dx^2
 				add_to_sparse(Vx(k[i,j]),Vx(k[i,j+1]), 2*eta_n[i+1,j+1]/dx2                    ,row,col,data) #Coefficient for Vx(i,j+1)
 				add_to_sparse(Vx(k[i,j]),Vx(k[i,j-1]), 2*eta_n[i+1,j]/dx2                      ,row,col,data) #Coefficient for Vx(i,j-1)
@@ -163,7 +163,7 @@ def return_sparse_matrix_Stokes(j_res, i_res, dx, dy, eta_s, eta_n, rho, gx_0, g
 					vector[Vy(k[i][j])] = 0                                                 # Right-hand-side part
 			elif (i,j) in Vbound:
 				add_to_sparse(Vy(k[i][j]), Vy(k[i][j]), kbond ,row,col,data)
-				vector[Vy(k[i][j])] = Vbound[(i,j)][1]
+				vector[Vy(k[i][j])] = Vbound[(i,j)][1]*kcont
 			else:
 				# Internal nodes: dSyy/dy+dSxy/dx-dP/dy=-gy*RHO
 				#dSyy/dy=2*etan(i+1,j+1)*(vy(i+1,j)-vy(i,j))/dy^2-2*etan(i,j+1)*(vy(i,j)-vy(i-1,j))/dy^2

@@ -52,9 +52,12 @@ class Model(object):
 
         self.__dict__.update(defaults)
         self.__dict__.update(self.markers)
-        self.__dict__.update(parameters.settings)
 
         for key in self.__dict__:
+            try:
+                self.__dict__[key] = parameters[key]
+            except KeyError:
+                pass
             if self.__dict__[key] is None:
                 raise ValueError (f'{key} parameter must be set')
 
@@ -177,13 +180,25 @@ class Model(object):
 
                         Vbound = {}
 
-                        for index, Vx, Vy in self.moving_points_index_list:
+                        for index, VxVy in self.moving_points_index_list:
                             x,y = mxx[index][0], myy[index][0]
                             # i,j = int(round(y)), int(round(x))
                             i,j = int(y), int(x)
+                            # velocities defined as a function
+                            if callable(VxVy):
+                                Vx, Vy = VxVy(step=step, time=T)
+                            else:
+                                Vx, Vy = VxVy
                             Vx *= self.velocity_multiplier
                             Vy *= self.velocity_multiplier
                             Vbound[(i,j)] = [Vx,Vy]
+                        print(Vbound)
+
+                        eta_s_ = np.copy(eta_s)
+                        eta_n_ = np.copy(eta_n)
+                        rho_ = np.copy(rho)
+                        so_xx_ = np.copy(so_xx)
+                        so_xy_ = np.copy(so_xy)
 
                         Stokes_sparse, vector = return_sparse_matrix_Stokes(j_res, i_res, dx, dy,
                                         eta_s, eta_n, rho, gx_0, gy_0, so_xx, so_xy, kbond, kcont, p0cell,
@@ -230,6 +245,7 @@ class Model(object):
                         s_xx = (1-xelvis_n[1:,1:])*2*eta_n0[1:,1:]*e_xx + xelvis_n[1:,1:]*so_xx0[1:,1:]
                         s_xy = (1-xelvis_s)*2*eta_s0*e_xy + xelvis_s*so_xy0
                         s_ii = (s_xx**2 + average(s_xy**2))**.5
+                        e_ii = (e_xx**2 + average(e_xy**2))**.5
 
                         # ds_xx = s_xx - average(so_xx0)
                         ds_xx = s_xx - so_xx0[1:,1:]
@@ -243,7 +259,7 @@ class Model(object):
                 m_P  = interpolate2m(mxx-.5, myy-.5, P[1:,1:]) # tecnichaly, there must be +.5,+.5
                                                                # but since we slice P, indexing goes one item lower
 
-                w = dVy_dx - dVx_dy
+                w = 0.5*(dVy_dx - dVx_dy)
 
                 m_s_xx, m_s_xy = self.interpolate_stress_changes(mxx, myy,
                                                                  m_s_xx, m_s_xy,
@@ -257,27 +273,21 @@ class Model(object):
                 m_w    = interpolate2m(mxx-.5 ,myy-.5 , w)
 
                 m_a = m_w * dt
-                m_s_xx_ = m_s_xx - m_s_xy * 2 * m_a
-                m_s_xy_ = m_s_xy + m_s_xy * 2 * m_a
-                m_s_xx, m_s_xy = m_s_xx_, m_s_xy_
+
+                # m_s_xx_ = m_s_xx - m_s_xy * 2 * m_a
+                # m_s_xy_ = m_s_xy + m_s_xx * 2 * m_a
+                # m_s_xx, m_s_xy = m_s_xx_, m_s_xy_
+
+                m_s_xx_ = m_s_xx*(np.cos(m_a)**2 - np.sin(m_a)**2 ) - m_s_xy*np.sin(2*m_a)
+                m_s_xy_ = m_s_xx*np.sin(2*m_a) + m_s_xy*np.cos(2*m_a)
+
+
+
 
                 self.advect(mxx, myy, m_Vx, m_Vy, Vx, Vy, dt)
 
                 T += dt
                 step +=1
-
-                #s_xx = 2 * eta[1:,1:] * e_xx
-
-                #d_s_xx = s_xx - average(sxx_0)
-
-                #s_xy = 2 * eta * e_xy
-
-                #d_s_xy = s_xy - sxy_0
-
-                #sii = (s_xx**2 + average(s_xy)**2)**.5
-                #eii = (e_xx**2 + average(e_xy)**2)**.5
-
-                #if step % step : continue
 
                 parameters = {'T' : T,
                               'step' : step,
@@ -287,6 +297,7 @@ class Model(object):
                               'myy' : myy,
                               'm_cat' : m_cat,
                               'sii' : s_ii,
+                              'eii' : e_ii,
                               'P' : P,
                               'Vx' : Vx,
                               'Vy' : Vy,
@@ -300,6 +311,11 @@ class Model(object):
                               'w' : w,
                               'markers_index_list' : self.markers_index_list,
                               'moving_points_index_list' : self.moving_points_index_list,
+                              'eta_s_' : eta_s_,
+                              'eta_n_' : eta_n_,
+                              'rho_' : rho_,
+                              'so_xx_' : so_xx_,
+                              'so_xy_' : so_xy_,
                              }
                 yield parameters
 
@@ -308,11 +324,13 @@ class Model(object):
             m_s_xx = interpolate2m(mxx-.5,myy-.5,s_xx)
             m_s_xy = interpolate2m(mxx,myy,s_xy)
         elif self.stress_changes == '2nd order':
+            print('2nd order')
             m_ds_xx = interpolate2m(mxx-.5,myy-.5,ds_xx)
             m_ds_xy = interpolate2m(mxx,myy,ds_xy)
             m_s_xx = m_s_xx + m_ds_xx
             m_s_xy = m_s_xy + m_ds_xy
         elif self.stress_changes == 'subgrid':
+            print('subgrid')
             d_ve = self.subgrid_relaxation
             m_eta = self.m_eta
             m_mu = self.m_mu
