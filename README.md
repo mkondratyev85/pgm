@@ -25,22 +25,22 @@ Installation
 
 First, make sure you use Python 3.6 by running:
 
-'''
-    python -V
-'''
+```
+python -V
+```
 
 Clone repository:
 
-'''
-    git clone https://github.com/mkondratyev85/pgm
-    cd pgm
-'''
+```
+git clone https://github.com/mkondratyev85/pgm
+cd pgm
+```
 
 Install requirements:
 
-'''
-    pip3 install -r requirements.txt
-'''
+```
+pip3 install -r requirements.txt
+```
 
 
 ### Mac:
@@ -59,8 +59,8 @@ Usage
 
 To run benchmark use:
 
-'''
-    python3.6 pgm.py benchmarks/slab.py /tmp/slab
-'''
+```
+python pgm.py benchmarks/slab.py /tmp/slab
+```
 
 That will run modelling that will store each step of modelling in /tmp/slab.
